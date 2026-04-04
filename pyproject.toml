@@ -34,6 +34,9 @@ Issues = "https://github.com/ywatanabe1989/scitex-path/issues"
 [project.entry-points."scitex_dev.docs"]
 scitex-path = "scitex_path"
 
+[project.entry-points."scitex_dev.skills"]
+scitex-path = "scitex_path"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/scitex_path"]
 
