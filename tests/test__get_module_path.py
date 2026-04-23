@@ -6,9 +6,8 @@
 Tests for get_module_path functionality.
 """
 
-import importlib.util
 import os
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -20,15 +19,16 @@ class TestGetDataPathFromAPackage:
 
     def test_get_data_path_success(self):
         """Test successful retrieval of data path."""
+        from pathlib import Path
+
         mock_spec = Mock()
         mock_spec.origin = "/home/user/project/src/mypackage/__init__.py"
 
         with patch("importlib.util.find_spec", return_value=mock_spec):
-            with patch("os.path.exists", return_value=True):
+            with patch("pathlib.Path.exists", return_value=True):
                 result = get_data_path_from_a_package("mypackage", "test_data.txt")
 
-                expected_path = os.path.join("/home/user/project/data", "test_data.txt")
-                assert result == expected_path
+                assert result == Path("/home/user/project/data/test_data.txt")
 
     def test_get_data_path_package_not_found(self):
         """Test when package is not found."""
