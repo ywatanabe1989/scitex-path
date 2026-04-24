@@ -6,16 +6,16 @@
 Tests for find functionality.
 """
 
-import fnmatch
 import os
-import shutil
 import tempfile
-from unittest.mock import MagicMock, Mock, call, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
 from scitex_path import find_dir, find_file, find_git_root
 from scitex_path._find import _find
+
+pytest.importorskip("git")
 
 
 class TestFindGitRoot:

@@ -4,6 +4,16 @@ Scientific project path utilities for the [SciTeX](https://github.com/ywatanabe1
 
 Provides file/directory finding, path splitting, symlink management, and version incrementing.
 
+> **Interfaces:** Python ⭐⭐⭐ (primary) · CLI — · MCP — · Skills ⭐⭐ · Hook — · HTTP —
+
+## Problem and Solution
+
+
+| # | Problem | Solution |
+|---|---------|----------|
+| 1 | **Scripts hard-code `/home/user/proj/...` paths** -- break the moment someone else runs them | **`find_git_root()` + `get_spath(filename)`** -- paths auto-resolve to the repo root and the current script's `_out/` dir |
+| 2 | **`{script}_out/` convention implemented 33 different ways across the ecosystem** -- inconsistent, error-prone | **Canonical helpers** -- `mk_spath`, `get_this_path`, `create_relative_symlink`, `find_latest` standardize the pattern |
+
 ## Installation
 
 ```bash

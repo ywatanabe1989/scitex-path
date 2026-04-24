@@ -4,10 +4,10 @@ build-backend = "hatchling.build"
 
 [project]
 name = "scitex-path"
-version = "0.1.0"
+version = "0.1.2"
 description = "Scientific project path utilities (find, split, symlink, versioning)"
 readme = "README.md"
-license = "AGPL-3.0"
+license = "AGPL-3.0-only"
 requires-python = ">=3.10"
 authors = [
     { name = "Yusuke Watanabe" },
@@ -25,6 +25,13 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
+
+[project.optional-dependencies]
+# Bare install is the full package; [all] is provided for ecosystem-wide
+# consistency so `pip install scitex-*[all]` works uniformly.
+all = []
+
+dev = ["pytest", "pytest-cov", "scitex-dev>=0.7.0"]
 
 [project.urls]
 Homepage = "https://github.com/ywatanabe1989/scitex-path"

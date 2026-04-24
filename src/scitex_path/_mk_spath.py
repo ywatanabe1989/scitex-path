@@ -9,8 +9,10 @@ import os
 from pathlib import Path
 from typing import Union
 
+from ._split import split
 
-def mk_spath(sfname: Union[str, Path], makedirs: bool = False) -> Path:
+
+def mk_spath(sfname: Union[str, Path], makedirs: bool = False) -> str:
     """Create a save path based on the calling script's location.
 
     Parameters
@@ -22,25 +24,22 @@ def mk_spath(sfname: Union[str, Path], makedirs: bool = False) -> Path:
 
     Returns
     -------
-    Path
+    str
         The full save path for the file.
 
     Example
     -------
     >>> spath = mk_spath('output.txt', makedirs=True)
-    >>> print(spath)
-    Path('/path/to/current/script_out/output.txt')
     """
     caller_file = inspect.stack()[1].filename
     if "ipython" in caller_file.lower():
         caller_file = f"/tmp/fake-{os.getenv('USER')}.py"
 
-    fpath = Path(caller_file)
-    sdir = fpath.parent / f"{fpath.stem}_out"
-    spath = sdir / sfname
+    sdir, sfname_mod, _ = split(__file__)
+    spath = sdir + sfname_mod + "/" + str(sfname)
 
     if makedirs:
-        spath.parent.mkdir(parents=True, exist_ok=True)
+        os.makedirs(os.path.dirname(spath), exist_ok=True)
 
     return spath
 

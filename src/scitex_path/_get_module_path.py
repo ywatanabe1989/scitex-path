@@ -35,8 +35,11 @@ def get_data_path_from_a_package(package_str: str, resource: str) -> Path:
         raise ImportError(f"Package '{package_str}' not found")
 
     origin = Path(spec.origin)
+    # Walk up until we reach the `src/` layout boundary, then pick the
+    # sibling `data/` directory at the project root. Falls back to the
+    # filesystem root if no `src/` parent exists.
     data_dir = origin.parents[0]
-    while "src" not in str(data_dir) and data_dir != data_dir.parent:
+    while data_dir.name != "src" and data_dir != data_dir.parent:
         data_dir = data_dir.parent
     data_dir = data_dir.parent / "data"
 
