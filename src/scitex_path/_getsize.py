@@ -5,6 +5,7 @@
 """File size utilities."""
 
 import math
+import os
 from pathlib import Path
 from typing import Union
 
@@ -21,10 +22,15 @@ def getsize(path: Union[str, Path]) -> Union[int, float]:
     -------
     int or float
         File size in bytes, or math.nan if file doesn't exist.
+
+    Raises
+    ------
+    PermissionError
+        If the file cannot be accessed due to permissions.
     """
-    path = Path(path)
-    if path.exists():
-        return path.stat().st_size
+    path_str = os.fspath(path)
+    if os.path.exists(path_str):
+        return os.path.getsize(path_str)
     return math.nan
 
 

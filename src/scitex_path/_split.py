@@ -4,11 +4,12 @@
 
 """Path splitting utilities."""
 
+import os
 from pathlib import Path
 from typing import Tuple, Union
 
 
-def split(fpath: Union[str, Path]) -> Tuple[Path, str, str]:
+def split(fpath: Union[str, Path]) -> Tuple[str, str, str]:
     """Split a file path into directory, filename, and extension.
 
     Parameters
@@ -18,18 +19,24 @@ def split(fpath: Union[str, Path]) -> Tuple[Path, str, str]:
 
     Returns
     -------
-    tuple of (Path, str, str)
-        (directory, filename without extension, extension)
+    tuple of (str, str, str)
+        (directory with trailing slash, filename without extension, extension)
 
     Example
     -------
-    >>> dirname, fname, ext = split('../data/01/day1/tt8-2.mat')
-    >>> print(dirname)  # Path('../data/01/day1')
-    >>> print(fname)    # 'tt8-2'
-    >>> print(ext)      # '.mat'
+    >>> dirname, fname, ext = split('/path/to/file.txt')
+    >>> dirname
+    '/path/to/'
+    >>> fname
+    'file'
+    >>> ext
+    '.txt'
     """
-    path = Path(fpath)
-    return path.parent, path.stem, path.suffix
+    fpath = os.fspath(fpath) if not isinstance(fpath, str) else fpath
+    dirname = os.path.dirname(fpath) + "/"
+    basename = os.path.basename(fpath)
+    fname, ext = os.path.splitext(basename)
+    return dirname, fname, ext
 
 
 # EOF
