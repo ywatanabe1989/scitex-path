@@ -42,7 +42,7 @@ class TestGetDataPathFromAPackage:
         mock_spec.origin = "/home/user/project/src/mypackage/__init__.py"
 
         with patch("importlib.util.find_spec", return_value=mock_spec):
-            with patch("os.path.exists", return_value=False):
+            with patch("pathlib.Path.exists", return_value=False):
                 with pytest.raises(
                     FileNotFoundError, match="Resource 'missing.txt' not found"
                 ):
@@ -50,7 +50,8 @@ class TestGetDataPathFromAPackage:
 
     def test_get_data_path_various_origins(self):
         """Test with various package origin formats (Unix paths only on Linux)."""
-        # Only test Unix paths since Windows path handling differs by OS
+        from pathlib import Path
+
         test_cases = [
             (
                 "/usr/lib/python3.9/site-packages/src/pkg/__init__.py",
@@ -64,23 +65,21 @@ class TestGetDataPathFromAPackage:
             mock_spec.origin = origin
 
             with patch("importlib.util.find_spec", return_value=mock_spec):
-                with patch("os.path.exists", return_value=True):
+                with patch("pathlib.Path.exists", return_value=True):
                     result = get_data_path_from_a_package("testpkg", "file.txt")
 
-                    expected_path = os.path.join(expected_data_dir, "file.txt")
-                    assert result == expected_path
+                    assert result == Path(expected_data_dir) / "file.txt"
 
     def test_get_data_path_no_src_in_path(self):
-        """Test when 'src' is not in the package path."""
+        """Test when 'src' is not in the package path — loop walks to
+        filesystem root, then picks root.parent/'data'."""
         mock_spec = Mock()
         mock_spec.origin = "/home/user/project/mypackage/__init__.py"
 
         with patch("importlib.util.find_spec", return_value=mock_spec):
-            with patch("os.path.exists", return_value=True):
-                # This will create a path like "/home/user/project/mypackage/__init__.pydata"
-                # because split("src")[0] returns the full string when "src" is not found
+            with patch("pathlib.Path.exists", return_value=True):
                 result = get_data_path_from_a_package("mypackage", "test.txt")
-                assert "data" in result
+                assert "data" in str(result)
 
     def test_get_data_path_nested_resource(self):
         """Test with nested resource path."""
@@ -88,7 +87,7 @@ class TestGetDataPathFromAPackage:
         mock_spec.origin = "/home/user/project/src/mypackage/__init__.py"
 
         with patch("importlib.util.find_spec", return_value=mock_spec):
-            with patch("os.path.exists", return_value=True):
+            with patch("pathlib.Path.exists", return_value=True):
                 result = get_data_path_from_a_package(
                     "mypackage", "subdir/test_data.csv"
                 )
@@ -96,7 +95,7 @@ class TestGetDataPathFromAPackage:
                 expected_path = os.path.join(
                     "/home/user/project/data", "subdir/test_data.csv"
                 )
-                assert result == expected_path
+                assert str(result) == expected_path
 
     def test_get_data_path_empty_resource(self):
         """Test with empty resource name."""
@@ -104,25 +103,23 @@ class TestGetDataPathFromAPackage:
         mock_spec.origin = "/home/user/project/src/mypackage/__init__.py"
 
         with patch("importlib.util.find_spec", return_value=mock_spec):
-            with patch("os.path.exists", return_value=True):
+            with patch("pathlib.Path.exists", return_value=True):
                 result = get_data_path_from_a_package("mypackage", "")
 
-                # os.path.join(path, "") adds trailing slash
-                expected_path = "/home/user/project/data/"
-                assert result == expected_path
+                # Path drops the empty segment (unlike os.path.join which adds /).
+                assert str(result) == "/home/user/project/data"
 
     def test_get_data_path_multiple_src_in_path(self):
-        """Test when 'src' appears multiple times in path."""
+        """Test when 'src' appears multiple times in path — the loop stops
+        at the innermost `src/` directory (nearest to the package)."""
         mock_spec = Mock()
         mock_spec.origin = "/home/user/src/project/src/mypackage/__init__.py"
 
         with patch("importlib.util.find_spec", return_value=mock_spec):
-            with patch("os.path.exists", return_value=True):
+            with patch("pathlib.Path.exists", return_value=True):
                 result = get_data_path_from_a_package("mypackage", "data.json")
 
-                # Should split on first 'src'
-                expected_path = os.path.join("/home/user/data", "data.json")
-                assert result == expected_path
+                assert str(result) == "/home/user/src/project/data/data.json"
 
     def test_get_data_path_case_sensitivity(self):
         """Test case sensitivity of 'src' in path."""
@@ -130,11 +127,11 @@ class TestGetDataPathFromAPackage:
         mock_spec.origin = "/home/user/SRC/mypackage/__init__.py"
 
         with patch("importlib.util.find_spec", return_value=mock_spec):
-            with patch("os.path.exists", return_value=True):
+            with patch("pathlib.Path.exists", return_value=True):
                 # 'SRC' won't match 'src' in split
                 result = get_data_path_from_a_package("mypackage", "test.txt")
                 # Will append 'data' to the full path
-                assert result.endswith("data/test.txt")
+                assert str(result).endswith("data/test.txt")
 
     def test_get_data_path_special_characters(self):
         """Test with special characters in paths."""
@@ -142,13 +139,13 @@ class TestGetDataPathFromAPackage:
         mock_spec.origin = "/home/user-name/project@1.0/src/my-package/__init__.py"
 
         with patch("importlib.util.find_spec", return_value=mock_spec):
-            with patch("os.path.exists", return_value=True):
+            with patch("pathlib.Path.exists", return_value=True):
                 result = get_data_path_from_a_package("my-package", "test file.txt")
 
                 expected_path = os.path.join(
                     "/home/user-name/project@1.0/data", "test file.txt"
                 )
-                assert result == expected_path
+                assert str(result) == expected_path
 
     def test_get_data_path_real_package(self):
         """Test with a real package (if available)."""
@@ -162,9 +159,9 @@ class TestGetDataPathFromAPackage:
             )
 
             with patch("importlib.util.find_spec", return_value=mock_spec):
-                with patch("os.path.exists", return_value=True):
+                with patch("pathlib.Path.exists", return_value=True):
                     result = get_data_path_from_a_package("json", "test.json")
-                    assert result.endswith("data/test.json")
+                    assert str(result).endswith("data/test.json")
         except Exception:
             # Skip if json module structure is different
             pytest.skip("Real package test not applicable in this environment")
