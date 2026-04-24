@@ -4,6 +4,8 @@ Scientific project path utilities for the [SciTeX](https://github.com/ywatanabe1
 
 Provides file/directory finding, path splitting, symlink management, and version incrementing.
 
+> **Interfaces:** Python ⭐⭐⭐ (primary) · CLI — · MCP — · Skills ⭐⭐ · Hook — · HTTP —
+
 ## Problem and Solution
 
 
