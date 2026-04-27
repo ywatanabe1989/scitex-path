@@ -69,3 +69,6 @@ line-length = 88
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I"]
+
+[tool.scitex-linter]
+library_dirs = ["src", "tests", "examples"]
