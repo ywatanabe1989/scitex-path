@@ -26,6 +26,8 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
+dependencies = ["numpy"]
+
 [project.optional-dependencies]
 dev = [
     "pytest",
