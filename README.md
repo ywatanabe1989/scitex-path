@@ -1,5 +1,16 @@
 # scitex-path
 
+<!-- scitex-badges:start -->
+[![PyPI](https://img.shields.io/pypi/v/scitex-path.svg)](https://pypi.org/project/scitex-path/)
+[![Python](https://img.shields.io/pypi/pyversions/scitex-path.svg)](https://pypi.org/project/scitex-path/)
+[![Tests](https://github.com/ywatanabe1989/scitex-path/actions/workflows/test.yml/badge.svg)](https://github.com/ywatanabe1989/scitex-path/actions/workflows/test.yml)
+[![Install Test](https://github.com/ywatanabe1989/scitex-path/actions/workflows/install-test.yml/badge.svg)](https://github.com/ywatanabe1989/scitex-path/actions/workflows/install-test.yml)
+[![Coverage](https://codecov.io/gh/ywatanabe1989/scitex-path/graph/badge.svg)](https://codecov.io/gh/ywatanabe1989/scitex-path)
+[![Docs](https://readthedocs.org/projects/scitex-path/badge/?version=latest)](https://scitex-path.readthedocs.io/en/latest/)
+[![License: AGPL v3](https://img.shields.io/badge/license-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+<!-- scitex-badges:end -->
+
+
 Scientific project path utilities for the [SciTeX](https://github.com/ywatanabe1989/scitex-python) ecosystem.
 
 Provides file/directory finding, path splitting, symlink management, and version incrementing.
