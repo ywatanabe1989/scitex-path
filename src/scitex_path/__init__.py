@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """scitex-path: Scientific project path utilities (find, split, symlink, versioning)."""
 
+from __future__ import annotations
+
 try:
     from importlib.metadata import version as _v, PackageNotFoundError
     try:
@@ -34,6 +36,7 @@ from ._this_path import get_this_path, this_path
 from ._version import find_latest, increment_version
 
 __all__ = [
+    "__version__",
     "clean",
     "create_relative_symlink",
     "find_dir",
