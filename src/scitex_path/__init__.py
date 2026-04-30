@@ -1,6 +1,16 @@
 #!/usr/bin/env python3
 """scitex-path: Scientific project path utilities (find, split, symlink, versioning)."""
 
+try:
+    from importlib.metadata import version as _v, PackageNotFoundError
+    try:
+        __version__ = _v("scitex-path")
+    except PackageNotFoundError:
+        __version__ = "0.0.0+local"
+    del _v, PackageNotFoundError
+except ImportError:  # pragma: no cover — only on ancient Pythons
+    __version__ = "0.0.0+local"
+
 from ._clean import clean
 from ._find import find_dir, find_file, find_git_root
 from ._get_module_path import get_data_path_from_a_package
