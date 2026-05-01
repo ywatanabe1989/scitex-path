@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "scitex-path"
-version = "0.1.3"
+version = "0.1.5"
 description = "Scientific project path utilities (find, split, symlink, versioning)"
 readme = "README.md"
 license = "AGPL-3.0-only"
@@ -48,6 +48,7 @@ all = [
 Homepage = "https://github.com/ywatanabe1989/scitex-path"
 Repository = "https://github.com/ywatanabe1989/scitex-path"
 Issues = "https://github.com/ywatanabe1989/scitex-path/issues"
+Documentation = "https://scitex-path.readthedocs.io"
 
 [project.entry-points."scitex_dev.docs"]
 scitex-path = "scitex_path"

@@ -1,3 +1,9 @@
+---
+name: python-api
+description: scitex-path — Python API — see file body for details.
+tags: [scitex-path, scitex-package]
+---
+
 <!-- 02_python-api.md -->
 
 # scitex-path — Python API
