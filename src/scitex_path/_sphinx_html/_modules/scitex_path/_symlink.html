@@ -1,0 +1,456 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>scitex_path._symlink &mdash; SciTeX Path v0.1.5</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=59fadc99"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            SciTeX Path
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#requirements">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#basic-installation">Basic Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../installation.html#development">Development</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api/scitex_path.html">scitex_path</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../api/scitex_path.html#scitex_path.clean"><code class="docutils literal notranslate"><span class="pre">clean()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/scitex_path.html#scitex_path.create_relative_symlink"><code class="docutils literal notranslate"><span class="pre">create_relative_symlink()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/scitex_path.html#scitex_path.find_dir"><code class="docutils literal notranslate"><span class="pre">find_dir()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/scitex_path.html#scitex_path.find_file"><code class="docutils literal notranslate"><span class="pre">find_file()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/scitex_path.html#scitex_path.find_git_root"><code class="docutils literal notranslate"><span class="pre">find_git_root()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/scitex_path.html#scitex_path.find_latest"><code class="docutils literal notranslate"><span class="pre">find_latest()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/scitex_path.html#scitex_path.fix_broken_symlinks"><code class="docutils literal notranslate"><span class="pre">fix_broken_symlinks()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/scitex_path.html#scitex_path.get_data_path_from_a_package"><code class="docutils literal notranslate"><span class="pre">get_data_path_from_a_package()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/scitex_path.html#scitex_path.get_spath"><code class="docutils literal notranslate"><span class="pre">get_spath()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/scitex_path.html#scitex_path.get_this_path"><code class="docutils literal notranslate"><span class="pre">get_this_path()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/scitex_path.html#scitex_path.getsize"><code class="docutils literal notranslate"><span class="pre">getsize()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/scitex_path.html#scitex_path.increment_version"><code class="docutils literal notranslate"><span class="pre">increment_version()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/scitex_path.html#scitex_path.is_symlink"><code class="docutils literal notranslate"><span class="pre">is_symlink()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/scitex_path.html#scitex_path.list_symlinks"><code class="docutils literal notranslate"><span class="pre">list_symlinks()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/scitex_path.html#scitex_path.mk_spath"><code class="docutils literal notranslate"><span class="pre">mk_spath()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/scitex_path.html#scitex_path.readlink"><code class="docutils literal notranslate"><span class="pre">readlink()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/scitex_path.html#scitex_path.resolve_symlinks"><code class="docutils literal notranslate"><span class="pre">resolve_symlinks()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/scitex_path.html#scitex_path.split"><code class="docutils literal notranslate"><span class="pre">split()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/scitex_path.html#scitex_path.symlink"><code class="docutils literal notranslate"><span class="pre">symlink()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/scitex_path.html#scitex_path.this_path"><code class="docutils literal notranslate"><span class="pre">this_path()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/scitex_path.html#scitex_path.unlink_symlink"><code class="docutils literal notranslate"><span class="pre">unlink_symlink()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">SciTeX Path</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">scitex_path._symlink</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for scitex_path._symlink</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="c1"># Timestamp: &quot;2025-09-16 15:11:33 (ywatanabe)&quot;</span>
+<span class="c1"># File: scitex-path/src/scitex_path/_symlink.py</span>
+<span class="c1"># ----------------------------------------</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="n">__FILE__</span> <span class="o">=</span> <span class="vm">__file__</span>
+<span class="n">__DIR__</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__FILE__</span><span class="p">)</span>
+<span class="c1"># ----------------------------------------</span>
+
+<span class="sd">&quot;&quot;&quot;Symlink creation and management utilities.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="symlink">
+<a class="viewcode-back" href="../../api/scitex_path.html#scitex_path.symlink">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">symlink</span><span class="p">(</span>
+    <span class="n">src</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
+    <span class="n">dst</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
+    <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">target_is_directory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">relative</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a symbolic link pointing to src named dst.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        src: Source path (target of the symlink)</span>
+<span class="sd">        dst: Destination path (the symlink to create)</span>
+<span class="sd">        overwrite: If True, remove existing dst before creating symlink</span>
+<span class="sd">        target_is_directory: On Windows, specify if target is directory (auto-detected if None)</span>
+<span class="sd">        relative: If True, create relative symlink instead of absolute</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Path object of the created symlink</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        FileExistsError: If dst exists and overwrite=False</span>
+<span class="sd">        FileNotFoundError: If src doesn&#39;t exist</span>
+<span class="sd">        OSError: If symlink creation fails</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        &gt;&gt;&gt; from scitex_path import symlink</span>
+<span class="sd">        &gt;&gt;&gt; # Create absolute symlink</span>
+<span class="sd">        &gt;&gt;&gt; symlink(&quot;/path/to/source&quot;, &quot;/path/to/link&quot;)</span>
+
+<span class="sd">        &gt;&gt;&gt; # Create relative symlink</span>
+<span class="sd">        &gt;&gt;&gt; symlink(&quot;../source&quot;, &quot;link&quot;, relative=True)</span>
+
+<span class="sd">        &gt;&gt;&gt; # Overwrite existing symlink</span>
+<span class="sd">        &gt;&gt;&gt; symlink(&quot;/path/to/new_source&quot;, &quot;/path/to/link&quot;, overwrite=True)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">src_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+    <span class="n">dst_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">dst</span><span class="p">)</span>
+
+    <span class="c1"># Note: We allow creating symlinks to non-existent targets</span>
+    <span class="c1"># This is valid in Unix/Linux and useful for testing</span>
+
+    <span class="c1"># Handle existing destination</span>
+    <span class="k">if</span> <span class="n">dst_path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">or</span> <span class="n">dst_path</span><span class="o">.</span><span class="n">is_symlink</span><span class="p">():</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">overwrite</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">FileExistsError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Destination already exists: </span><span class="si">{</span><span class="n">dst_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Remove existing file/symlink</span>
+            <span class="k">if</span> <span class="n">dst_path</span><span class="o">.</span><span class="n">is_symlink</span><span class="p">():</span>
+                <span class="n">dst_path</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="n">dst_path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+                <span class="n">dst_path</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="n">dst_path</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+                <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+
+                <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">dst_path</span><span class="p">)</span>
+
+    <span class="c1"># Create parent directory if needed</span>
+    <span class="n">dst_path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Determine if target is directory (for Windows)</span>
+    <span class="k">if</span> <span class="n">target_is_directory</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">src_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="n">target_is_directory</span> <span class="o">=</span> <span class="n">src_path</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span>
+
+    <span class="c1"># Create symlink</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">relative</span><span class="p">:</span>
+            <span class="c1"># Calculate relative path from dst to src</span>
+            <span class="k">if</span> <span class="n">src_path</span><span class="o">.</span><span class="n">is_absolute</span><span class="p">():</span>
+                <span class="c1"># src is absolute, calculate relative from dst</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">rel_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">relpath</span><span class="p">(</span><span class="n">src_path</span><span class="p">,</span> <span class="n">dst_path</span><span class="o">.</span><span class="n">parent</span><span class="p">)</span>
+                    <span class="n">src_for_link</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">rel_path</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                    <span class="c1"># Can&#39;t create relative path (e.g., different drives on Windows)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Cannot create relative path from </span><span class="si">{</span><span class="n">dst_path</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">src_path</span><span class="si">}</span><span class="s2">, using absolute&quot;</span>
+                    <span class="p">)</span>
+                    <span class="n">src_for_link</span> <span class="o">=</span> <span class="n">src_path</span><span class="o">.</span><span class="n">absolute</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Both paths are relative, need to resolve them first</span>
+                <span class="c1"># to calculate the correct relative path</span>
+                <span class="n">src_abs</span> <span class="o">=</span> <span class="n">src_path</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+                <span class="n">dst_parent_abs</span> <span class="o">=</span> <span class="n">dst_path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">rel_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">relpath</span><span class="p">(</span><span class="n">src_abs</span><span class="p">,</span> <span class="n">dst_parent_abs</span><span class="p">)</span>
+                    <span class="n">src_for_link</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">rel_path</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                    <span class="c1"># Can&#39;t create relative path</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Cannot create relative path from </span><span class="si">{</span><span class="n">dst_path</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">src_path</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+                    <span class="n">src_for_link</span> <span class="o">=</span> <span class="n">src_path</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">src_for_link</span> <span class="o">=</span> <span class="n">src_path</span><span class="o">.</span><span class="n">absolute</span><span class="p">()</span>
+
+        <span class="n">dst_path</span><span class="o">.</span><span class="n">symlink_to</span><span class="p">(</span><span class="n">src_for_link</span><span class="p">,</span> <span class="n">target_is_directory</span><span class="o">=</span><span class="n">target_is_directory</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created symlink: </span><span class="si">{</span><span class="n">dst_path</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">src_for_link</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Failed to create symlink from </span><span class="si">{</span><span class="n">dst_path</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">src_for_link</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">dst_path</span></div>
+
+
+
+<div class="viewcode-block" id="is_symlink">
+<a class="viewcode-back" href="../../api/scitex_path.html#scitex_path.is_symlink">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">is_symlink</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Check if a path is a symbolic link.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        path: Path to check</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        True if path is a symlink, False otherwise</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">is_symlink</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="readlink">
+<a class="viewcode-back" href="../../api/scitex_path.html#scitex_path.readlink">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">readlink</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the path to which the symbolic link points.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        path: Symlink path to read</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Path object pointing to the symlink target</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        OSError: If path is not a symlink</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">is_symlink</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">OSError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Path is not a symbolic link: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">readlink</span><span class="p">(</span><span class="n">path</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="resolve_symlinks">
+<a class="viewcode-back" href="../../api/scitex_path.html#scitex_path.resolve_symlinks">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_symlinks</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Resolve all symbolic links in a path.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        path: Path potentially containing symlinks</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Fully resolved absolute path</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="create_relative_symlink">
+<a class="viewcode-back" href="../../api/scitex_path.html#scitex_path.create_relative_symlink">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_relative_symlink</span><span class="p">(</span>
+    <span class="n">src</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">dst</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a relative symbolic link.</span>
+
+<span class="sd">    This is a convenience wrapper around symlink() with relative=True.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        src: Source path (target of the symlink)</span>
+<span class="sd">        dst: Destination path (the symlink to create)</span>
+<span class="sd">        overwrite: If True, remove existing dst before creating symlink</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Path object of the created symlink</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">symlink</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span> <span class="n">relative</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="unlink_symlink">
+<a class="viewcode-back" href="../../api/scitex_path.html#scitex_path.unlink_symlink">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">unlink_symlink</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">missing_ok</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Remove a symbolic link.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        path: Symlink to remove</span>
+<span class="sd">        missing_ok: If True, don&#39;t raise error if symlink doesn&#39;t exist</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        FileNotFoundError: If symlink doesn&#39;t exist and missing_ok=False</span>
+<span class="sd">        OSError: If path is not a symlink</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">is_symlink</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">missing_ok</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Symlink does not exist: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">is_symlink</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">OSError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Path is not a symbolic link: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">path</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="list_symlinks">
+<a class="viewcode-back" href="../../api/scitex_path.html#scitex_path.list_symlinks">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">list_symlinks</span><span class="p">(</span><span class="n">directory</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">recursive</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    List all symbolic links in a directory.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        directory: Directory to search</span>
+<span class="sd">        recursive: If True, search recursively</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List of Path objects for all symlinks found</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">directory</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+    <span class="n">symlinks</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">if</span> <span class="n">recursive</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">directory</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">&quot;*&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">is_symlink</span><span class="p">():</span>
+                <span class="n">symlinks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">directory</span><span class="o">.</span><span class="n">iterdir</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">is_symlink</span><span class="p">():</span>
+                <span class="n">symlinks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">symlinks</span></div>
+
+
+
+<div class="viewcode-block" id="fix_broken_symlinks">
+<a class="viewcode-back" href="../../api/scitex_path.html#scitex_path.fix_broken_symlinks">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fix_broken_symlinks</span><span class="p">(</span>
+    <span class="n">directory</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
+    <span class="n">recursive</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">remove</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">new_target</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Find and optionally fix broken symbolic links.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        directory: Directory to search</span>
+<span class="sd">        recursive: If True, search recursively</span>
+<span class="sd">        remove: If True, remove broken symlinks</span>
+<span class="sd">        new_target: If provided, repoint broken symlinks to this target</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Dictionary with &#39;found&#39;, &#39;fixed&#39;, and &#39;removed&#39; lists of paths</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">directory</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;found&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;fixed&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;removed&quot;</span><span class="p">:</span> <span class="p">[]}</span>
+
+    <span class="n">symlinks</span> <span class="o">=</span> <span class="n">list_symlinks</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">recursive</span><span class="o">=</span><span class="n">recursive</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="n">symlinks</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Check if target exists</span>
+            <span class="n">target</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">readlink</span><span class="p">(</span><span class="n">link</span><span class="p">))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">link</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="n">target</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">target</span><span class="o">.</span><span class="n">is_absolute</span><span class="p">():</span>
+                <span class="c1"># Relative link with non-existent target</span>
+                <span class="n">result</span><span class="p">[</span><span class="s2">&quot;found&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">link</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">target</span><span class="o">.</span><span class="n">is_absolute</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">target</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="c1"># Absolute link with non-existent target</span>
+                <span class="n">result</span><span class="p">[</span><span class="s2">&quot;found&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">link</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+            <span class="n">result</span><span class="p">[</span><span class="s2">&quot;found&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">link</span><span class="p">)</span>
+
+    <span class="c1"># Fix or remove broken symlinks</span>
+    <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;found&quot;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">remove</span><span class="p">:</span>
+            <span class="n">link</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span>
+            <span class="n">result</span><span class="p">[</span><span class="s2">&quot;removed&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">link</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">new_target</span><span class="p">:</span>
+            <span class="n">link</span><span class="o">.</span><span class="n">unlink</span><span class="p">()</span>
+            <span class="n">symlink</span><span class="p">(</span><span class="n">new_target</span><span class="p">,</span> <span class="n">link</span><span class="p">)</span>
+            <span class="n">result</span><span class="p">[</span><span class="s2">&quot;fixed&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">link</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+
+<span class="c1"># EOF</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024-2026, Yusuke Watanabe.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
