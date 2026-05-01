@@ -86,7 +86,9 @@ sp.get_spath(filename) / sp.mk_spath(filename)
 
 ## Part of SciTeX
 
-`scitex-path` is part of [**SciTeX**](https://scitex.ai).
+`scitex-path` is part of [**SciTeX**](https://scitex.ai). Install via
+the umbrella with `pip install scitex[path]` to use as
+`scitex.path` (Python).
 
 >Four Freedoms for Research
 >
