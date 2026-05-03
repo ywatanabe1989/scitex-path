@@ -1,7 +1,8 @@
 ---
-name: python-api
-description: scitex-path — Python API — see file body for details.
-tags: [scitex-path, scitex-package]
+description: |
+  [TOPIC] Python API
+  [DETAILS] Public functions grouped by search/location, path manipulation, SciTeX session paths, and symlink toolkit.
+tags: [scitex-path-python-api]
 ---
 
 <!-- 02_python-api.md -->

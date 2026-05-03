@@ -1,16 +1,17 @@
 ---
 name: scitex-path
-description: Project-aware path utilities for scientific Python — finding files/dirs/git roots, SciTeX `script_out/` session-path conventions, versioned directories, and symlink hygiene. Public API — search/location (`find_file`, `find_dir`, `find_git_root`, `find_latest`), path manipulation (`clean`, `split`, `getsize`, `increment_version`), SciTeX session paths (`get_spath`, `mk_spath`, `get_this_path`, `this_path`, `get_data_path_from_a_package`), symlink toolkit (`symlink`, `create_relative_symlink`, `readlink`, `is_symlink`, `list_symlinks`, `resolve_symlinks`, `unlink_symlink`, `fix_broken_symlinks`). No CLI, no MCP tools. Drop-in replacement for hand-rolling `pathlib.Path.rglob` loops to locate files, walking up directories to find `.git/`, ad-hoc `os.path.splitext`+`basename` chains, manual `v001`/`v002` versioning logic, and bespoke `os.symlink`+`os.readlink`+`os.path.islink` scripts that miss relative-symlink edge cases. Use whenever the user asks to "find a file up/down the tree", "locate the git root", "find the latest versioned output directory", "split a path into dir/stem/ext", "build a script_out path for this session", "create a relative symlink", "list all symlinks under a directory", "fix broken symlinks", "bump the v00X version of an output folder", or mentions `scitex.path`, `get_spath`, `find_git_root`, SciTeX session paths.
-user-invocable: false
+description: |
+  [WHAT] Project-aware path utilities — find files/dirs/git roots, SciTeX session-path conventions (`get_spath`, `mk_spath`), versioned directories, and symlink hygiene helpers.
+  [WHEN] Finding files up/down a tree, locating the git root, building per-session script_out paths, creating relative symlinks, fixing broken symlinks, or bumping `v00X` output versions.
+  [HOW] `from scitex_path import find_file, find_git_root, get_spath, create_relative_symlink, increment_version, ...` — works on top of pathlib.
+tags: [scitex-path]
 primary_interface: python
 interfaces:
   python: 3
   cli: 0
   mcp: 0
   skills: 2
-  hook: 0
   http: 0
-tags: [scitex-path, scitex-package]
 ---
 
 # scitex-path

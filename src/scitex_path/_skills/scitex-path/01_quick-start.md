@@ -1,7 +1,8 @@
 ---
-name: quick-start
-description: scitex-path — Quick Start — see file body for details.
-tags: [scitex-path, scitex-package]
+description: |
+  [TOPIC] Quick Start
+  [DETAILS] Install, import, and 3 usage snippets for find_file/find_git_root/get_spath patterns.
+tags: [scitex-path-quick-start]
 ---
 
 <!-- 01_quick-start.md -->
