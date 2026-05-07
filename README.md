@@ -86,6 +86,45 @@ sp.get_spath(filename) / sp.mk_spath(filename)
 
 </details>
 
+## Architecture
+
+```
+scitex_path/
+├── _find.py              ← find_file, find_dir, find_git_root, find_latest
+├── _split_clean.py       ← split, clean, getsize
+├── _symlink.py           ← symlink, create_relative_symlink,
+│                            list_symlinks, fix_broken_symlinks, resolve_symlinks
+├── _version.py           ← increment_version (semver bumps)
+└── _session.py           ← this_path / get_spath / mk_spath
+                            (caller-script-relative `_out/` dirs)
+```
+
+## Demo
+
+```mermaid
+flowchart LR
+    A[script.py] -->|find_git_root| B[repo root]
+    A -->|mk_spath| C[script_out/]
+    C --> D[results.csv]
+    D -->|create_relative_symlink| E[repo/latest.csv]
+    F[/runs/experiment_v*/] -->|find_latest| G[experiment_v17]
+```
+
+```python
+import scitex_path as sp
+
+root = sp.find_git_root()                          # → /home/me/proj/myrepo
+out  = sp.mk_spath("results.csv")                  # → <script>_out/results.csv
+sp.create_relative_symlink(out, root / "latest.csv")
+print(sp.find_latest("/runs/experiment_v*"))       # → /runs/experiment_v17
+```
+
+```
+/home/me/proj/myrepo
+/home/me/proj/myrepo/scripts/train_out/results.csv
+/runs/experiment_v17
+```
+
 ## Part of SciTeX
 
 `scitex-path` is part of [**SciTeX**](https://scitex.ai). Install via
