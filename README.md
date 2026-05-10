@@ -9,7 +9,7 @@
 <p align="center"><b>Scientific project path utilities — find files / git root, symlink mgmt, version increment.</b></p>
 
 <p align="center">
-  <a href="https://scitex-path.readthedocs.io/">Full Documentation</a> · <code>pip install scitex-path</code>
+  <a href="https://scitex-path.readthedocs.io/">Full Documentation</a> · <code>uv pip install scitex-path[all]</code>
 </p>
 
 <!-- scitex-badges:start -->
