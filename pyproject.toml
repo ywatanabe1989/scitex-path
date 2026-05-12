@@ -63,6 +63,11 @@ packages = ["src/scitex_path"]
 testpaths = ["tests"]
 addopts = "-x -q"
 
+[tool.coverage.run]
+parallel = true
+source = ["scitex_path"]
+concurrency = ["multiprocessing", "thread"]
+
 [tool.ruff]
 target-version = "py310"
 line-length = 88
