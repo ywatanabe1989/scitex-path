@@ -14,12 +14,12 @@
 
 <!-- scitex-badges:start -->
 <p align="center">
-  <a href="https://pypi.org/project/scitex-path/"><img src="https://img.shields.io/pypi/v/scitex-path.svg" alt="PyPI"></a>
-  <a href="https://pypi.org/project/scitex-path/"><img src="https://img.shields.io/pypi/pyversions/scitex-path.svg" alt="Python"></a>
-  <a href="https://github.com/ywatanabe1989/scitex-path/actions/workflows/test.yml"><img src="https://github.com/ywatanabe1989/scitex-path/actions/workflows/test.yml/badge.svg" alt="Tests"></a>
-  <a href="https://github.com/ywatanabe1989/scitex-path/actions/workflows/install-test.yml"><img src="https://github.com/ywatanabe1989/scitex-path/actions/workflows/install-test.yml/badge.svg" alt="Install Test"></a>
-  <a href="https://codecov.io/gh/ywatanabe1989/scitex-path"><img src="https://codecov.io/gh/ywatanabe1989/scitex-path/graph/badge.svg" alt="Coverage"></a>
-  <a href="https://scitex-path.readthedocs.io/en/latest/"><img src="https://readthedocs.org/projects/scitex-path/badge/?version=latest" alt="Docs"></a>
+  <a href="https://pypi.org/project/scitex-path/"><img src="https://img.shields.io/pypi/v/scitex-path?label=pypi" alt="pypi"></a>
+  <a href="https://pypi.org/project/scitex-path/"><img src="https://img.shields.io/pypi/pyversions/scitex-path?label=python" alt="python"></a>
+  <a href="https://github.com/ywatanabe1989/scitex-path/actions/workflows/rtd-sphinx-build-on-ubuntu-latest.yml"><img src="https://img.shields.io/github/actions/workflow/status/ywatanabe1989/scitex-path/rtd-sphinx-build-on-ubuntu-latest.yml?branch=develop&label=docs" alt="docs"></a>
+  <a href="https://github.com/ywatanabe1989/scitex-path/actions/workflows/pytest-matrix-on-ubuntu-py3-11-3-12-3-13.yml"><img src="https://img.shields.io/github/actions/workflow/status/ywatanabe1989/scitex-path/pytest-matrix-on-ubuntu-py3-11-3-12-3-13.yml?branch=develop&label=tests" alt="tests"></a>
+  <a href="https://github.com/ywatanabe1989/scitex-path/actions/workflows/import-smoke-on-ubuntu-py3-12.yml"><img src="https://img.shields.io/github/actions/workflow/status/ywatanabe1989/scitex-path/import-smoke-on-ubuntu-py3-12.yml?branch=develop&label=install-check" alt="install-check"></a>
+  <a href="https://codecov.io/gh/ywatanabe1989/scitex-path"><img src="https://img.shields.io/codecov/c/github/ywatanabe1989/scitex-path/develop?label=cov" alt="cov"></a>
   <a href="https://www.gnu.org/licenses/agpl-3.0"><img src="https://img.shields.io/badge/license-AGPL_v3-blue.svg" alt="License: AGPL v3"></a>
 </p>
 <!-- scitex-badges:end -->
