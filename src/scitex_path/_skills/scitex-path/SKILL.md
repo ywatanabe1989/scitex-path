@@ -16,8 +16,6 @@ interfaces:
 
 # scitex-path
 
-> **Interfaces:** Python ⭐⭐⭐ (primary) · CLI — · MCP — · Skills ⭐⭐ · Hook — · HTTP —
-
 Path helpers tailored to SciTeX conventions (`script_out/`, versioned run
 directories, symlink hygiene). Wraps `os.path` / `pathlib` with project-aware
 semantics.
