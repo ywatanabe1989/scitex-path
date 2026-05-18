@@ -1,231 +1,465 @@
 #!/usr/bin/env python3
 # Timestamp: "2025-06-02 13:10:00 (ywatanabe)"
-# File: ./tests/scitex/path/test__split.py
+# File: ./tests/scitex_path/test__split.py
+
+"""Tests for ``scitex_path.split``.
+
+STX-TQ001: every test asserts something.
+STX-TQ002: every test carries Arrange / Act / Assert markers.
+STX-TQ003: every test name has >=3 word-tokens.
+STX-TQ007: every test asserts exactly one fact.
+"""
 
 import os
-from pathlib import Path
 
 import pytest
 
+from scitex_path import split
 
-def test_split_basic():
-    """Test split with basic file path."""
-    from scitex_path import split
+# ---------------------------------------------------------------------------
+# Basic absolute file path
+# ---------------------------------------------------------------------------
 
-    dirname, fname, ext = split("/path/to/file.txt")
 
+def test_split_returns_dirname_for_absolute_file_path():
+    # Arrange
+    path_in = "/path/to/file.txt"
+    # Act
+    dirname, _, _ = split(path_in)
+    # Assert
     assert dirname == "/path/to/"
+
+
+def test_split_returns_fname_for_absolute_file_path():
+    # Arrange
+    path_in = "/path/to/file.txt"
+    # Act
+    _, fname, _ = split(path_in)
+    # Assert
     assert fname == "file"
+
+
+def test_split_returns_ext_for_absolute_file_path():
+    # Arrange
+    path_in = "/path/to/file.txt"
+    # Act
+    _, _, ext = split(path_in)
+    # Assert
     assert ext == ".txt"
 
 
-def test_split_relative_path():
-    """Test split with relative path."""
-    from scitex_path import split
+# ---------------------------------------------------------------------------
+# Relative path
+# ---------------------------------------------------------------------------
 
-    dirname, fname, ext = split("../data/01/day1/split_octave/2kHz_mat/tt8-2.mat")
 
+def test_split_returns_dirname_for_relative_path():
+    # Arrange
+    path_in = "../data/01/day1/split_octave/2kHz_mat/tt8-2.mat"
+    # Act
+    dirname, _, _ = split(path_in)
+    # Assert
     assert dirname == "../data/01/day1/split_octave/2kHz_mat/"
+
+
+def test_split_returns_fname_for_relative_path():
+    # Arrange
+    path_in = "../data/01/day1/split_octave/2kHz_mat/tt8-2.mat"
+    # Act
+    _, fname, _ = split(path_in)
+    # Assert
     assert fname == "tt8-2"
+
+
+def test_split_returns_ext_for_relative_path():
+    # Arrange
+    path_in = "../data/01/day1/split_octave/2kHz_mat/tt8-2.mat"
+    # Act
+    _, _, ext = split(path_in)
+    # Assert
     assert ext == ".mat"
 
 
-def test_split_no_extension():
-    """Test split with file without extension."""
-    from scitex_path import split
+# ---------------------------------------------------------------------------
+# No extension
+# ---------------------------------------------------------------------------
 
-    dirname, fname, ext = split("/path/to/README")
 
+def test_split_returns_dirname_for_file_without_extension():
+    # Arrange
+    path_in = "/path/to/README"
+    # Act
+    dirname, _, _ = split(path_in)
+    # Assert
     assert dirname == "/path/to/"
+
+
+def test_split_returns_fname_for_file_without_extension():
+    # Arrange
+    path_in = "/path/to/README"
+    # Act
+    _, fname, _ = split(path_in)
+    # Assert
     assert fname == "README"
+
+
+def test_split_returns_empty_ext_for_file_without_extension():
+    # Arrange
+    path_in = "/path/to/README"
+    # Act
+    _, _, ext = split(path_in)
+    # Assert
     assert ext == ""
 
 
-def test_split_multiple_dots():
-    """Test split with filename containing multiple dots."""
-    from scitex_path import split
+# ---------------------------------------------------------------------------
+# Multiple-dot filename
+# ---------------------------------------------------------------------------
 
-    dirname, fname, ext = split("/path/to/file.backup.tar.gz")
 
+def test_split_returns_dirname_for_multi_dot_filename():
+    # Arrange
+    path_in = "/path/to/file.backup.tar.gz"
+    # Act
+    dirname, _, _ = split(path_in)
+    # Assert
     assert dirname == "/path/to/"
+
+
+def test_split_returns_stem_for_multi_dot_filename():
+    # Arrange
+    path_in = "/path/to/file.backup.tar.gz"
+    # Act
+    _, fname, _ = split(path_in)
+    # Assert
     assert fname == "file.backup.tar"
+
+
+def test_split_returns_last_ext_for_multi_dot_filename():
+    # Arrange
+    path_in = "/path/to/file.backup.tar.gz"
+    # Act
+    _, _, ext = split(path_in)
+    # Assert
     assert ext == ".gz"
 
 
-def test_split_hidden_file():
-    """Test split with hidden file (starting with dot)."""
-    from scitex_path import split
+# ---------------------------------------------------------------------------
+# Hidden files
+# ---------------------------------------------------------------------------
 
-    dirname, fname, ext = split("/home/user/.bashrc")
 
+def test_split_returns_dirname_for_hidden_file():
+    # Arrange
+    path_in = "/home/user/.bashrc"
+    # Act
+    dirname, _, _ = split(path_in)
+    # Assert
     assert dirname == "/home/user/"
+
+
+def test_split_returns_fname_for_hidden_file_keeps_leading_dot():
+    # Arrange
+    path_in = "/home/user/.bashrc"
+    # Act
+    _, fname, _ = split(path_in)
+    # Assert
     assert fname == ".bashrc"
+
+
+def test_split_returns_empty_ext_for_hidden_file_without_extension():
+    # Arrange
+    path_in = "/home/user/.bashrc"
+    # Act
+    _, _, ext = split(path_in)
+    # Assert
     assert ext == ""
 
 
-def test_split_hidden_file_with_extension():
-    """Test split with hidden file that has extension."""
-    from scitex_path import split
-
-    dirname, fname, ext = split("/home/user/.config.yaml")
-
+def test_split_returns_dirname_for_hidden_file_with_extension():
+    # Arrange
+    path_in = "/home/user/.config.yaml"
+    # Act
+    dirname, _, _ = split(path_in)
+    # Assert
     assert dirname == "/home/user/"
+
+
+def test_split_returns_fname_for_hidden_file_with_extension():
+    # Arrange
+    path_in = "/home/user/.config.yaml"
+    # Act
+    _, fname, _ = split(path_in)
+    # Assert
     assert fname == ".config"
+
+
+def test_split_returns_ext_for_hidden_file_with_extension():
+    # Arrange
+    path_in = "/home/user/.config.yaml"
+    # Act
+    _, _, ext = split(path_in)
+    # Assert
     assert ext == ".yaml"
 
 
-def test_split_root_directory():
-    """Test split with file in root directory."""
-    from scitex_path import split
+# ---------------------------------------------------------------------------
+# Root directory case (legacy quirk: dirname appears as "//")
+# ---------------------------------------------------------------------------
 
-    dirname, fname, ext = split("/file.txt")
 
-    # Implementation adds trailing slash: os.path.dirname('/file.txt') + '/' = '/' + '/' = '//'
+def test_split_returns_double_slash_dirname_for_file_at_root():
+    # Arrange
+    path_in = "/file.txt"
+    # Act
+    dirname, _, _ = split(path_in)
+    # Assert
     assert dirname == "//"
+
+
+def test_split_returns_fname_for_file_at_root():
+    # Arrange
+    path_in = "/file.txt"
+    # Act
+    _, fname, _ = split(path_in)
+    # Assert
     assert fname == "file"
+
+
+def test_split_returns_ext_for_file_at_root():
+    # Arrange
+    path_in = "/file.txt"
+    # Act
+    _, _, ext = split(path_in)
+    # Assert
     assert ext == ".txt"
 
 
-def test_split_current_directory():
-    """Test split with file in current directory."""
-    from scitex_path import split
-
-    dirname, fname, ext = split("file.txt")
-
-    assert dirname == "/"  # When no directory, returns '/'
-    assert fname == "file"
-    assert ext == ".txt"
+# ---------------------------------------------------------------------------
+# File in current directory
+# ---------------------------------------------------------------------------
 
 
-def test_split_trailing_slash():
-    """Test split with path ending in slash (directory)."""
-    from scitex_path import split
-
-    dirname, fname, ext = split("/path/to/directory/")
-
-    assert dirname == "/path/to/directory/"
-    assert fname == ""
-    assert ext == ""
-
-
-def test_split_windows_path():
-    """Test split with Windows-style path."""
-    from scitex_path import split
-
-    # Note: os.path handles this based on the OS
-    if os.name == "nt":
-        dirname, fname, ext = split("C:\\Users\\user\\file.txt")
-        assert dirname == "C:\\Users\\user\\"
-        assert fname == "file"
-        assert ext == ".txt"
-    else:
-        # On Unix, backslashes are part of filename
-        dirname, fname, ext = split("C:\\Users\\user\\file.txt")
-        # Behavior depends on OS
-
-
-def test_split_empty_path():
-    """Test split with empty path."""
-    from scitex_path import split
-
-    dirname, fname, ext = split("")
-
+def test_split_returns_slash_dirname_for_bare_filename():
+    # Arrange
+    path_in = "file.txt"
+    # Act
+    dirname, _, _ = split(path_in)
+    # Assert
     assert dirname == "/"
+
+
+def test_split_returns_fname_for_bare_filename():
+    # Arrange
+    path_in = "file.txt"
+    # Act
+    _, fname, _ = split(path_in)
+    # Assert
+    assert fname == "file"
+
+
+def test_split_returns_ext_for_bare_filename():
+    # Arrange
+    path_in = "file.txt"
+    # Act
+    _, _, ext = split(path_in)
+    # Assert
+    assert ext == ".txt"
+
+
+# ---------------------------------------------------------------------------
+# Trailing slash (directory-like)
+# ---------------------------------------------------------------------------
+
+
+def test_split_returns_full_path_as_dirname_when_input_ends_with_slash():
+    # Arrange
+    path_in = "/path/to/directory/"
+    # Act
+    dirname, _, _ = split(path_in)
+    # Assert
+    assert dirname == "/path/to/directory/"
+
+
+def test_split_returns_empty_fname_for_directory_input():
+    # Arrange
+    path_in = "/path/to/directory/"
+    # Act
+    _, fname, _ = split(path_in)
+    # Assert
     assert fname == ""
+
+
+def test_split_returns_empty_ext_for_directory_input():
+    # Arrange
+    path_in = "/path/to/directory/"
+    # Act
+    _, _, ext = split(path_in)
+    # Assert
     assert ext == ""
 
 
-def test_split_special_characters():
-    """Test split with special characters in filename."""
-    from scitex_path import split
+# ---------------------------------------------------------------------------
+# Empty path
+# ---------------------------------------------------------------------------
 
-    dirname, fname, ext = split("/path/to/file[with]special(chars).txt")
 
+def test_split_returns_slash_dirname_for_empty_path():
+    # Arrange
+    path_in = ""
+    # Act
+    dirname, _, _ = split(path_in)
+    # Assert
+    assert dirname == "/"
+
+
+def test_split_returns_empty_fname_for_empty_path():
+    # Arrange
+    path_in = ""
+    # Act
+    _, fname, _ = split(path_in)
+    # Assert
+    assert fname == ""
+
+
+def test_split_returns_empty_ext_for_empty_path():
+    # Arrange
+    path_in = ""
+    # Act
+    _, _, ext = split(path_in)
+    # Assert
+    assert ext == ""
+
+
+# ---------------------------------------------------------------------------
+# Special characters
+# ---------------------------------------------------------------------------
+
+
+def test_split_returns_dirname_for_special_chars_filename():
+    # Arrange
+    path_in = "/path/to/file[with]special(chars).txt"
+    # Act
+    dirname, _, _ = split(path_in)
+    # Assert
     assert dirname == "/path/to/"
+
+
+def test_split_returns_fname_for_special_chars_filename():
+    # Arrange
+    path_in = "/path/to/file[with]special(chars).txt"
+    # Act
+    _, fname, _ = split(path_in)
+    # Assert
     assert fname == "file[with]special(chars)"
+
+
+def test_split_returns_ext_for_special_chars_filename():
+    # Arrange
+    path_in = "/path/to/file[with]special(chars).txt"
+    # Act
+    _, _, ext = split(path_in)
+    # Assert
     assert ext == ".txt"
 
 
-def test_split_unicode_characters():
-    """Test split with unicode characters."""
-    from scitex_path import split
+# ---------------------------------------------------------------------------
+# Unicode characters
+# ---------------------------------------------------------------------------
 
-    dirname, fname, ext = split("/path/to/ファイル.txt")
 
+def test_split_returns_dirname_for_unicode_filename():
+    # Arrange
+    path_in = "/path/to/ファイル.txt"
+    # Act
+    dirname, _, _ = split(path_in)
+    # Assert
     assert dirname == "/path/to/"
+
+
+def test_split_returns_fname_for_unicode_filename():
+    # Arrange
+    path_in = "/path/to/ファイル.txt"
+    # Act
+    _, fname, _ = split(path_in)
+    # Assert
     assert fname == "ファイル"
+
+
+def test_split_returns_ext_for_unicode_filename():
+    # Arrange
+    path_in = "/path/to/ファイル.txt"
+    # Act
+    _, _, ext = split(path_in)
+    # Assert
     assert ext == ".txt"
 
 
-def test_split_spaces_in_path():
-    """Test split with spaces in path and filename."""
-    from scitex_path import split
+# ---------------------------------------------------------------------------
+# Spaces in path
+# ---------------------------------------------------------------------------
 
-    dirname, fname, ext = split("/path with spaces/file name.txt")
 
+def test_split_returns_dirname_preserving_spaces_in_dirs():
+    # Arrange
+    path_in = "/path with spaces/file name.txt"
+    # Act
+    dirname, _, _ = split(path_in)
+    # Assert
     assert dirname == "/path with spaces/"
+
+
+def test_split_returns_fname_preserving_spaces_in_filename():
+    # Arrange
+    path_in = "/path with spaces/file name.txt"
+    # Act
+    _, fname, _ = split(path_in)
+    # Assert
     assert fname == "file name"
+
+
+def test_split_returns_ext_when_filename_has_spaces():
+    # Arrange
+    path_in = "/path with spaces/file name.txt"
+    # Act
+    _, _, ext = split(path_in)
+    # Assert
     assert ext == ".txt"
 
 
-def test_split_double_extension():
-    """Test split behavior with double extensions."""
-    from scitex_path import split
+# ---------------------------------------------------------------------------
+# Compound extension behavior
+# ---------------------------------------------------------------------------
 
-    # Only the last extension is considered
-    dirname, fname, ext = split("/path/to/archive.tar.gz")
 
+def test_split_compound_extension_returns_dirname():
+    # Arrange
+    path_in = "/path/to/archive.tar.gz"
+    # Act
+    dirname, _, _ = split(path_in)
+    # Assert
     assert dirname == "/path/to/"
+
+
+def test_split_compound_extension_returns_stem_with_inner_extension():
+    # Arrange
+    path_in = "/path/to/archive.tar.gz"
+    # Act
+    _, fname, _ = split(path_in)
+    # Assert
     assert fname == "archive.tar"
+
+
+def test_split_compound_extension_returns_only_outermost_extension():
+    # Arrange
+    path_in = "/path/to/archive.tar.gz"
+    # Act
+    _, _, ext = split(path_in)
+    # Assert
     assert ext == ".gz"
 
 
 if __name__ == "__main__":
-    import os
-
-    import pytest
-
     pytest.main([os.path.abspath(__file__)])
 
-# --------------------------------------------------------------------------------
-# Start of Source Code from: /home/ywatanabe/proj/scitex-code/src/scitex/path/_split.py
-# --------------------------------------------------------------------------------
-# #!/usr/bin/env python3
-# # Timestamp: "2026-01-08 02:00:00 (ywatanabe)"
-# # File: /home/ywatanabe/proj/scitex-code/src/scitex/path/_split.py
-#
-# """Path splitting utilities."""
-#
-# from pathlib import Path
-# from typing import Tuple, Union
-#
-#
-# def split(fpath: Union[str, Path]) -> Tuple[Path, str, str]:
-#     """Split a file path into directory, filename, and extension.
-#
-#     Parameters
-#     ----------
-#     fpath : str or Path
-#         File path to split.
-#
-#     Returns
-#     -------
-#     tuple of (Path, str, str)
-#         (directory, filename without extension, extension)
-#
-#     Example
-#     -------
-#     >>> dirname, fname, ext = split('../data/01/day1/tt8-2.mat')
-#     >>> print(dirname)  # Path('../data/01/day1')
-#     >>> print(fname)    # 'tt8-2'
-#     >>> print(ext)      # '.mat'
-#     """
-#     path = Path(fpath)
-#     return path.parent, path.stem, path.suffix
-#
-#
-# # EOF
-
-# --------------------------------------------------------------------------------
-# End of Source Code from: /home/ywatanabe/proj/scitex-code/src/scitex/path/_split.py
-# --------------------------------------------------------------------------------
+# EOF

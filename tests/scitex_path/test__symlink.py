@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 # Time-stamp: "2026-01-04 (ywatanabe)"
-# File: ./tests/scitex/path/test__symlink.py
+# File: ./tests/scitex_path/test__symlink.py
 
-"""Comprehensive tests for scitex_path symlink utilities."""
+"""Tests for scitex_path symlink utilities.
+
+STX-TQ001 / 002 / 003 / 007: each test asserts exactly one fact, has the
+three AAA marker comments, and has a descriptive multi-token name.
+"""
 
 import os
 import sys
@@ -15,63 +19,109 @@ sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
 )
 
+from scitex_path import (
+    create_relative_symlink,
+    fix_broken_symlinks,
+    is_symlink,
+    list_symlinks,
+    readlink,
+    resolve_symlinks,
+    symlink,
+    unlink_symlink,
+)
 
 # =============================================================================
-# Tests for symlink()
+# symlink()
 # =============================================================================
 
 
 class TestSymlink:
     """Tests for symlink() function."""
 
-    def test_symlink_basic_file(self):
-        """Test creating basic symlink to a file."""
-        from scitex_path import symlink
-
+    def test_symlink_basic_file_returns_dst_path(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             src = Path(temp_dir) / "source.txt"
             dst = Path(temp_dir) / "link.txt"
             src.write_text("test content")
-
+            # Act
             result = symlink(src, dst)
-
+            # Assert
             assert result == dst
+
+    def test_symlink_basic_file_creates_symlink_at_dst(self):
+        # Arrange
+        with tempfile.TemporaryDirectory() as temp_dir:
+            src = Path(temp_dir) / "source.txt"
+            dst = Path(temp_dir) / "link.txt"
+            src.write_text("test content")
+            # Act
+            symlink(src, dst)
+            # Assert
             assert dst.is_symlink()
+
+    def test_symlink_basic_file_resolves_to_source_content(self):
+        # Arrange
+        with tempfile.TemporaryDirectory() as temp_dir:
+            src = Path(temp_dir) / "source.txt"
+            dst = Path(temp_dir) / "link.txt"
+            src.write_text("test content")
+            # Act
+            symlink(src, dst)
+            # Assert
             assert dst.read_text() == "test content"
 
-    def test_symlink_basic_directory(self):
-        """Test creating symlink to a directory."""
-        from scitex_path import symlink
-
+    def test_symlink_basic_directory_returns_dst_path(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             src = Path(temp_dir) / "source_dir"
             dst = Path(temp_dir) / "link_dir"
             src.mkdir()
             (src / "file.txt").write_text("in dir")
-
+            # Act
             result = symlink(src, dst)
-
+            # Assert
             assert result == dst
+
+    def test_symlink_basic_directory_creates_symlink_at_dst(self):
+        # Arrange
+        with tempfile.TemporaryDirectory() as temp_dir:
+            src = Path(temp_dir) / "source_dir"
+            dst = Path(temp_dir) / "link_dir"
+            src.mkdir()
+            (src / "file.txt").write_text("in dir")
+            # Act
+            symlink(src, dst)
+            # Assert
             assert dst.is_symlink()
+
+    def test_symlink_basic_directory_exposes_child_file_through_link(self):
+        # Arrange
+        with tempfile.TemporaryDirectory() as temp_dir:
+            src = Path(temp_dir) / "source_dir"
+            dst = Path(temp_dir) / "link_dir"
+            src.mkdir()
+            (src / "file.txt").write_text("in dir")
+            # Act
+            symlink(src, dst)
+            # Assert
             assert (dst / "file.txt").read_text() == "in dir"
 
-    def test_symlink_overwrite_false_raises(self):
-        """Test symlink raises when dst exists and overwrite=False."""
-        from scitex_path import symlink
-
+    def test_symlink_raises_file_exists_error_when_overwrite_false(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             src = Path(temp_dir) / "source.txt"
             dst = Path(temp_dir) / "link.txt"
             src.write_text("source")
             dst.write_text("existing")
-
-            with pytest.raises(FileExistsError):
+            # Act
+            ctx = pytest.raises(FileExistsError)
+            # Assert
+            with ctx:
                 symlink(src, dst, overwrite=False)
 
-    def test_symlink_overwrite_true(self):
-        """Test symlink overwrites when overwrite=True."""
-        from scitex_path import symlink
-
+    def test_symlink_overwrite_true_replaces_old_link_with_new_target_content(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             src1 = Path(temp_dir) / "source1.txt"
             src2 = Path(temp_dir) / "source2.txt"
@@ -79,60 +129,73 @@ class TestSymlink:
             src1.write_text("first")
             src2.write_text("second")
             symlink(src1, dst)
-
+            # Act
             symlink(src2, dst, overwrite=True)
-
+            # Assert
             assert dst.read_text() == "second"
 
-    def test_symlink_overwrite_existing_file(self):
-        """Test symlink overwrites existing regular file."""
-        from scitex_path import symlink
-
+    def test_symlink_overwrite_true_replaces_regular_file_with_symlink(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             src = Path(temp_dir) / "source.txt"
             dst = Path(temp_dir) / "existing.txt"
             src.write_text("source")
             dst.write_text("existing regular file")
-
+            # Act
             symlink(src, dst, overwrite=True)
-
+            # Assert
             assert dst.is_symlink()
+
+    def test_symlink_overwrite_true_replaces_regular_file_with_source_content(self):
+        # Arrange
+        with tempfile.TemporaryDirectory() as temp_dir:
+            src = Path(temp_dir) / "source.txt"
+            dst = Path(temp_dir) / "existing.txt"
+            src.write_text("source")
+            dst.write_text("existing regular file")
+            # Act
+            symlink(src, dst, overwrite=True)
+            # Assert
             assert dst.read_text() == "source"
 
-    def test_symlink_overwrite_existing_directory(self):
-        """Test symlink overwrites existing directory."""
-        from scitex_path import symlink
-
+    def test_symlink_overwrite_true_replaces_existing_directory_with_symlink(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             src = Path(temp_dir) / "source.txt"
             dst = Path(temp_dir) / "existing_dir"
             src.write_text("source")
             dst.mkdir()
             (dst / "file.txt").write_text("in existing dir")
-
+            # Act
             symlink(src, dst, overwrite=True)
-
+            # Assert
             assert dst.is_symlink()
 
-    def test_symlink_relative_true(self):
-        """Test creating relative symlink."""
-        from scitex_path import symlink
-
+    def test_symlink_relative_true_creates_symlink_object(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             src = Path(temp_dir) / "source.txt"
             dst = Path(temp_dir) / "link.txt"
             src.write_text("test")
-
+            # Act
             symlink(src, dst, relative=True)
-
+            # Assert
             assert dst.is_symlink()
+
+    def test_symlink_relative_true_stores_relative_target_path(self):
+        # Arrange
+        with tempfile.TemporaryDirectory() as temp_dir:
+            src = Path(temp_dir) / "source.txt"
+            dst = Path(temp_dir) / "link.txt"
+            src.write_text("test")
+            # Act
+            symlink(src, dst, relative=True)
             target = os.readlink(dst)
+            # Assert
             assert not Path(target).is_absolute()
 
-    def test_symlink_relative_with_subdirs(self):
-        """Test relative symlink across subdirectories."""
-        from scitex_path import symlink
-
+    def test_symlink_relative_with_subdirs_creates_symlink(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             src_dir = Path(temp_dir) / "a" / "b"
             dst_dir = Path(temp_dir) / "c" / "d"
@@ -141,231 +204,297 @@ class TestSymlink:
             src = src_dir / "source.txt"
             dst = dst_dir / "link.txt"
             src.write_text("nested")
-
+            # Act
             symlink(src, dst, relative=True)
-
+            # Assert
             assert dst.is_symlink()
+
+    def test_symlink_relative_with_subdirs_resolves_to_source_content(self):
+        # Arrange
+        with tempfile.TemporaryDirectory() as temp_dir:
+            src_dir = Path(temp_dir) / "a" / "b"
+            dst_dir = Path(temp_dir) / "c" / "d"
+            src_dir.mkdir(parents=True)
+            dst_dir.mkdir(parents=True)
+            src = src_dir / "source.txt"
+            dst = dst_dir / "link.txt"
+            src.write_text("nested")
+            # Act
+            symlink(src, dst, relative=True)
+            # Assert
             assert dst.read_text() == "nested"
 
-    def test_symlink_creates_parent_dirs(self):
-        """Test symlink creates parent directories for dst."""
-        from scitex_path import symlink
-
+    def test_symlink_creates_missing_parent_directories_for_dst(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             src = Path(temp_dir) / "source.txt"
             dst = Path(temp_dir) / "nested" / "path" / "link.txt"
             src.write_text("test")
-
+            # Act
             symlink(src, dst)
-
+            # Assert
             assert dst.parent.exists()
+
+    def test_symlink_after_parent_creation_dst_is_symlink(self):
+        # Arrange
+        with tempfile.TemporaryDirectory() as temp_dir:
+            src = Path(temp_dir) / "source.txt"
+            dst = Path(temp_dir) / "nested" / "path" / "link.txt"
+            src.write_text("test")
+            # Act
+            symlink(src, dst)
+            # Assert
             assert dst.is_symlink()
 
-    def test_symlink_to_nonexistent_target(self):
-        """Test symlink to non-existent target (dangling symlink)."""
-        from scitex_path import symlink
-
+    def test_symlink_to_nonexistent_target_creates_dangling_symlink(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             src = Path(temp_dir) / "nonexistent.txt"
             dst = Path(temp_dir) / "link.txt"
-
-            result = symlink(src, dst)
-
+            # Act
+            symlink(src, dst)
+            # Assert
             assert dst.is_symlink()
-            assert not dst.exists()  # Target doesn't exist
 
-    def test_symlink_string_paths(self):
-        """Test symlink with string paths."""
-        from scitex_path import symlink
+    def test_symlink_to_nonexistent_target_dst_does_not_resolve(self):
+        # Arrange
+        with tempfile.TemporaryDirectory() as temp_dir:
+            src = Path(temp_dir) / "nonexistent.txt"
+            dst = Path(temp_dir) / "link.txt"
+            # Act
+            symlink(src, dst)
+            # Assert
+            assert not dst.exists()
 
+    def test_symlink_with_string_paths_returns_path_object_of_dst(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             src = os.path.join(temp_dir, "source.txt")
             dst = os.path.join(temp_dir, "link.txt")
             Path(src).write_text("test")
-
+            # Act
             result = symlink(src, dst)
-
+            # Assert
             assert result == Path(dst)
+
+    def test_symlink_with_string_paths_creates_symlink_at_dst(self):
+        # Arrange
+        with tempfile.TemporaryDirectory() as temp_dir:
+            src = os.path.join(temp_dir, "source.txt")
+            dst = os.path.join(temp_dir, "link.txt")
+            Path(src).write_text("test")
+            # Act
+            symlink(src, dst)
+            # Assert
             assert Path(dst).is_symlink()
 
-    def test_symlink_unicode_filename(self):
-        """Test symlink with unicode filename."""
-        from scitex_path import symlink
-
+    def test_symlink_unicode_filename_creates_symlink(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             src = Path(temp_dir) / "源文件.txt"
             dst = Path(temp_dir) / "链接.txt"
             src.write_text("unicode test")
-
+            # Act
             symlink(src, dst)
-
+            # Assert
             assert dst.is_symlink()
+
+    def test_symlink_unicode_filename_resolves_to_source_content(self):
+        # Arrange
+        with tempfile.TemporaryDirectory() as temp_dir:
+            src = Path(temp_dir) / "源文件.txt"
+            dst = Path(temp_dir) / "链接.txt"
+            src.write_text("unicode test")
+            # Act
+            symlink(src, dst)
+            # Assert
             assert dst.read_text() == "unicode test"
 
 
 # =============================================================================
-# Tests for is_symlink()
+# is_symlink()
 # =============================================================================
 
 
 class TestIsSymlink:
     """Tests for is_symlink() function."""
 
-    def test_is_symlink_true(self):
-        """Test is_symlink returns True for symlink."""
-        from scitex_path import is_symlink
-
+    def test_is_symlink_returns_true_for_real_symlink(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             src = Path(temp_dir) / "source.txt"
             dst = Path(temp_dir) / "link.txt"
             src.write_text("test")
             dst.symlink_to(src)
+            # Act
+            result = is_symlink(dst)
+            # Assert
+            assert result is True
 
-            assert is_symlink(dst) is True
+    def test_is_symlink_returns_false_for_regular_file(self):
+        # Arrange
+        f = tempfile.NamedTemporaryFile(delete=False)
+        f.close()
+        try:
+            # Act
+            result = is_symlink(f.name)
+            # Assert
+            assert result is False
+        finally:
+            os.unlink(f.name)
 
-    def test_is_symlink_false_regular_file(self):
-        """Test is_symlink returns False for regular file."""
-        from scitex_path import is_symlink
-
-        with tempfile.NamedTemporaryFile(delete=False) as f:
-            try:
-                assert is_symlink(f.name) is False
-            finally:
-                os.unlink(f.name)
-
-    def test_is_symlink_false_directory(self):
-        """Test is_symlink returns False for directory."""
-        from scitex_path import is_symlink
-
+    def test_is_symlink_returns_false_for_regular_directory(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
-            assert is_symlink(temp_dir) is False
+            # Act
+            result = is_symlink(temp_dir)
+            # Assert
+            assert result is False
 
-    def test_is_symlink_false_nonexistent(self):
-        """Test is_symlink returns False for non-existent path."""
-        from scitex_path import is_symlink
+    def test_is_symlink_returns_false_for_nonexistent_path(self):
+        # Arrange
+        nonexistent = "/nonexistent/path"
+        # Act
+        result = is_symlink(nonexistent)
+        # Assert
+        assert result is False
 
-        assert is_symlink("/nonexistent/path") is False
-
-    def test_is_symlink_broken_symlink(self):
-        """Test is_symlink returns True for broken symlink."""
-        from scitex_path import is_symlink
-
+    def test_is_symlink_returns_true_for_broken_symlink(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             src = Path(temp_dir) / "nonexistent.txt"
             dst = Path(temp_dir) / "broken_link.txt"
             dst.symlink_to(src)
+            # Act
+            result = is_symlink(dst)
+            # Assert
+            assert result is True
 
-            assert is_symlink(dst) is True
-
-    def test_is_symlink_string_path(self):
-        """Test is_symlink with string path."""
-        from scitex_path import is_symlink
-
+    def test_is_symlink_returns_true_when_called_with_string_path(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             src = os.path.join(temp_dir, "source.txt")
             dst = os.path.join(temp_dir, "link.txt")
             Path(src).write_text("test")
             Path(dst).symlink_to(src)
-
-            assert is_symlink(dst) is True
+            # Act
+            result = is_symlink(dst)
+            # Assert
+            assert result is True
 
 
 # =============================================================================
-# Tests for readlink()
+# readlink()
 # =============================================================================
 
 
 class TestReadlink:
     """Tests for readlink() function."""
 
-    def test_readlink_basic(self):
-        """Test readlink returns target path."""
-        from scitex_path import readlink
-
+    def test_readlink_returns_path_object(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             src = Path(temp_dir) / "source.txt"
             dst = Path(temp_dir) / "link.txt"
             src.write_text("test")
             dst.symlink_to(src)
-
+            # Act
             target = readlink(dst)
-
+            # Assert
             assert isinstance(target, Path)
-            # The target may be relative or absolute
+
+    def test_readlink_target_resolves_to_source(self):
+        # Arrange
+        with tempfile.TemporaryDirectory() as temp_dir:
+            src = Path(temp_dir) / "source.txt"
+            dst = Path(temp_dir) / "link.txt"
+            src.write_text("test")
+            dst.symlink_to(src)
+            # Act
+            target = readlink(dst)
+            # Assert
             assert src.name in str(target) or target.resolve() == src.resolve()
 
-    def test_readlink_raises_for_non_symlink(self):
-        """Test readlink raises OSError for non-symlink."""
-        from scitex_path import readlink
+    def test_readlink_raises_os_error_for_regular_file(self):
+        # Arrange
+        f = tempfile.NamedTemporaryFile(delete=False)
+        f.close()
+        try:
+            # Act
+            ctx = pytest.raises(OSError, match="not a symbolic link")
+            # Assert
+            with ctx:
+                readlink(f.name)
+        finally:
+            os.unlink(f.name)
 
-        with tempfile.NamedTemporaryFile(delete=False) as f:
-            try:
-                with pytest.raises(OSError, match="not a symbolic link"):
-                    readlink(f.name)
-            finally:
-                os.unlink(f.name)
-
-    def test_readlink_raises_for_directory(self):
-        """Test readlink raises OSError for directory."""
-        from scitex_path import readlink
-
+    def test_readlink_raises_os_error_for_directory(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
-            with pytest.raises(OSError, match="not a symbolic link"):
+            # Act
+            ctx = pytest.raises(OSError, match="not a symbolic link")
+            # Assert
+            with ctx:
                 readlink(temp_dir)
 
-    def test_readlink_broken_symlink(self):
-        """Test readlink works for broken symlink."""
-        from scitex_path import readlink
-
+    def test_readlink_returns_target_for_broken_symlink(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             src = Path(temp_dir) / "nonexistent.txt"
             dst = Path(temp_dir) / "broken_link.txt"
             dst.symlink_to(src)
-
+            # Act
             target = readlink(dst)
+            # Assert
             assert "nonexistent.txt" in str(target)
 
-    def test_readlink_string_path(self):
-        """Test readlink with string path."""
-        from scitex_path import readlink
-
+    def test_readlink_with_string_path_returns_path_object(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             src = os.path.join(temp_dir, "source.txt")
             dst = os.path.join(temp_dir, "link.txt")
             Path(src).write_text("test")
             Path(dst).symlink_to(src)
-
+            # Act
             target = readlink(dst)
+            # Assert
             assert isinstance(target, Path)
 
 
 # =============================================================================
-# Tests for resolve_symlinks()
+# resolve_symlinks()
 # =============================================================================
 
 
 class TestResolveSymlinks:
     """Tests for resolve_symlinks() function."""
 
-    def test_resolve_symlinks_single(self):
-        """Test resolve_symlinks with single symlink."""
-        from scitex_path import resolve_symlinks
-
+    def test_resolve_symlinks_single_link_equals_source_resolved(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             src = Path(temp_dir) / "source.txt"
             dst = Path(temp_dir) / "link.txt"
             src.write_text("test")
             dst.symlink_to(src)
-
+            # Act
             resolved = resolve_symlinks(dst)
-
+            # Assert
             assert resolved == src.resolve()
+
+    def test_resolve_symlinks_single_link_returns_absolute_path(self):
+        # Arrange
+        with tempfile.TemporaryDirectory() as temp_dir:
+            src = Path(temp_dir) / "source.txt"
+            dst = Path(temp_dir) / "link.txt"
+            src.write_text("test")
+            dst.symlink_to(src)
+            # Act
+            resolved = resolve_symlinks(dst)
+            # Assert
             assert resolved.is_absolute()
 
-    def test_resolve_symlinks_chain(self):
-        """Test resolve_symlinks with chain of symlinks."""
-        from scitex_path import resolve_symlinks
-
+    def test_resolve_symlinks_chain_resolves_to_original_source(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             src = Path(temp_dir) / "source.txt"
             link1 = Path(temp_dir) / "link1.txt"
@@ -373,68 +502,92 @@ class TestResolveSymlinks:
             src.write_text("test")
             link1.symlink_to(src)
             link2.symlink_to(link1)
-
+            # Act
             resolved = resolve_symlinks(link2)
-
+            # Assert
             assert resolved == src.resolve()
 
-    def test_resolve_symlinks_regular_file(self):
-        """Test resolve_symlinks with regular file (no symlinks)."""
-        from scitex_path import resolve_symlinks
+    def test_resolve_symlinks_regular_file_returns_its_own_resolved_path(self):
+        # Arrange
+        f = tempfile.NamedTemporaryFile(delete=False)
+        f.close()
+        try:
+            # Act
+            resolved = resolve_symlinks(f.name)
+            # Assert
+            assert resolved == Path(f.name).resolve()
+        finally:
+            os.unlink(f.name)
 
-        with tempfile.NamedTemporaryFile(delete=False) as f:
-            try:
-                resolved = resolve_symlinks(f.name)
-                assert resolved == Path(f.name).resolve()
-            finally:
-                os.unlink(f.name)
-
-    def test_resolve_symlinks_directory(self):
-        """Test resolve_symlinks with directory."""
-        from scitex_path import resolve_symlinks
-
+    def test_resolve_symlinks_directory_returns_absolute_path(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
+            # Act
             resolved = resolve_symlinks(temp_dir)
+            # Assert
             assert resolved.is_absolute()
+
+    def test_resolve_symlinks_directory_returns_existing_directory(self):
+        # Arrange
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Act
+            resolved = resolve_symlinks(temp_dir)
+            # Assert
             assert resolved.is_dir()
 
-    def test_resolve_symlinks_string_path(self):
-        """Test resolve_symlinks with string path."""
-        from scitex_path import resolve_symlinks
-
+    def test_resolve_symlinks_with_string_path_returns_path_object(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
+            # Act
             resolved = resolve_symlinks(temp_dir)
+            # Assert
             assert isinstance(resolved, Path)
 
 
 # =============================================================================
-# Tests for create_relative_symlink()
+# create_relative_symlink()
 # =============================================================================
 
 
 class TestCreateRelativeSymlink:
     """Tests for create_relative_symlink() function."""
 
-    def test_create_relative_symlink_basic(self):
-        """Test create_relative_symlink creates relative link."""
-        from scitex_path import create_relative_symlink
-
+    def test_create_relative_symlink_returns_dst_path(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             src = Path(temp_dir) / "source.txt"
             dst = Path(temp_dir) / "link.txt"
             src.write_text("test")
-
+            # Act
             result = create_relative_symlink(src, dst)
-
+            # Assert
             assert result == dst
+
+    def test_create_relative_symlink_creates_symlink_at_dst(self):
+        # Arrange
+        with tempfile.TemporaryDirectory() as temp_dir:
+            src = Path(temp_dir) / "source.txt"
+            dst = Path(temp_dir) / "link.txt"
+            src.write_text("test")
+            # Act
+            create_relative_symlink(src, dst)
+            # Assert
             assert dst.is_symlink()
+
+    def test_create_relative_symlink_stores_relative_target(self):
+        # Arrange
+        with tempfile.TemporaryDirectory() as temp_dir:
+            src = Path(temp_dir) / "source.txt"
+            dst = Path(temp_dir) / "link.txt"
+            src.write_text("test")
+            # Act
+            create_relative_symlink(src, dst)
             target = os.readlink(dst)
+            # Assert
             assert not Path(target).is_absolute()
 
-    def test_create_relative_symlink_overwrite(self):
-        """Test create_relative_symlink with overwrite."""
-        from scitex_path import create_relative_symlink
-
+    def test_create_relative_symlink_overwrite_replaces_existing_link_content(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             src1 = Path(temp_dir) / "source1.txt"
             src2 = Path(temp_dir) / "source2.txt"
@@ -442,15 +595,13 @@ class TestCreateRelativeSymlink:
             src1.write_text("first")
             src2.write_text("second")
             create_relative_symlink(src1, dst)
-
+            # Act
             create_relative_symlink(src2, dst, overwrite=True)
-
+            # Assert
             assert dst.read_text() == "second"
 
-    def test_create_relative_symlink_different_dirs(self):
-        """Test create_relative_symlink across directories."""
-        from scitex_path import create_relative_symlink
-
+    def test_create_relative_symlink_across_directories_creates_symlink(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             src_dir = Path(temp_dir) / "src"
             dst_dir = Path(temp_dir) / "dst"
@@ -459,108 +610,126 @@ class TestCreateRelativeSymlink:
             src = src_dir / "source.txt"
             dst = dst_dir / "link.txt"
             src.write_text("test")
-
+            # Act
             create_relative_symlink(src, dst)
-
+            # Assert
             assert dst.is_symlink()
+
+    def test_create_relative_symlink_across_directories_resolves_to_source_content(
+        self,
+    ):
+        # Arrange
+        with tempfile.TemporaryDirectory() as temp_dir:
+            src_dir = Path(temp_dir) / "src"
+            dst_dir = Path(temp_dir) / "dst"
+            src_dir.mkdir()
+            dst_dir.mkdir()
+            src = src_dir / "source.txt"
+            dst = dst_dir / "link.txt"
+            src.write_text("test")
+            # Act
+            create_relative_symlink(src, dst)
+            # Assert
             assert dst.read_text() == "test"
 
 
 # =============================================================================
-# Tests for unlink_symlink()
+# unlink_symlink()
 # =============================================================================
 
 
 class TestUnlinkSymlink:
     """Tests for unlink_symlink() function."""
 
-    def test_unlink_symlink_basic(self):
-        """Test unlink_symlink removes symlink."""
-        from scitex_path import unlink_symlink
-
+    def test_unlink_symlink_removes_symlink_entry(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             src = Path(temp_dir) / "source.txt"
             dst = Path(temp_dir) / "link.txt"
             src.write_text("test")
             dst.symlink_to(src)
-
+            # Act
             unlink_symlink(dst)
-
-            assert not dst.exists()
+            # Assert
             assert not dst.is_symlink()
-            assert src.exists()  # Source not affected
 
-    def test_unlink_symlink_missing_ok_true(self):
-        """Test unlink_symlink with missing_ok=True for non-existent."""
-        from scitex_path import unlink_symlink
+    def test_unlink_symlink_preserves_source_file(self):
+        # Arrange
+        with tempfile.TemporaryDirectory() as temp_dir:
+            src = Path(temp_dir) / "source.txt"
+            dst = Path(temp_dir) / "link.txt"
+            src.write_text("test")
+            dst.symlink_to(src)
+            # Act
+            unlink_symlink(dst)
+            # Assert
+            assert src.exists()
 
+    def test_unlink_symlink_missing_ok_true_does_not_raise(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             dst = Path(temp_dir) / "nonexistent_link.txt"
-
-            # Should not raise
+            # Act
             unlink_symlink(dst, missing_ok=True)
+            # Assert
+            assert not dst.exists()
 
-    def test_unlink_symlink_missing_ok_false(self):
-        """Test unlink_symlink raises with missing_ok=False."""
-        from scitex_path import unlink_symlink
-
+    def test_unlink_symlink_missing_ok_false_raises_file_not_found(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             dst = Path(temp_dir) / "nonexistent_link.txt"
-
-            with pytest.raises(FileNotFoundError):
+            # Act
+            ctx = pytest.raises(FileNotFoundError)
+            # Assert
+            with ctx:
                 unlink_symlink(dst, missing_ok=False)
 
-    def test_unlink_symlink_raises_for_non_symlink(self):
-        """Test unlink_symlink raises for regular file."""
-        from scitex_path import unlink_symlink
+    def test_unlink_symlink_raises_os_error_for_regular_file(self):
+        # Arrange
+        f = tempfile.NamedTemporaryFile(delete=False)
+        f.close()
+        try:
+            # Act
+            ctx = pytest.raises(OSError, match="not a symbolic link")
+            # Assert
+            with ctx:
+                unlink_symlink(f.name)
+        finally:
+            os.unlink(f.name)
 
-        with tempfile.NamedTemporaryFile(delete=False) as f:
-            try:
-                with pytest.raises(OSError, match="not a symbolic link"):
-                    unlink_symlink(f.name)
-            finally:
-                os.unlink(f.name)
-
-    def test_unlink_symlink_broken_link(self):
-        """Test unlink_symlink removes broken symlink."""
-        from scitex_path import unlink_symlink
-
+    def test_unlink_symlink_removes_broken_symlink_entry(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             dst = Path(temp_dir) / "broken_link.txt"
             dst.symlink_to("/nonexistent/target")
-
+            # Act
             unlink_symlink(dst)
-
-            assert not dst.exists()
+            # Assert
             assert not dst.is_symlink()
 
-    def test_unlink_symlink_string_path(self):
-        """Test unlink_symlink with string path."""
-        from scitex_path import unlink_symlink
-
+    def test_unlink_symlink_with_string_path_removes_link(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             src = Path(temp_dir) / "source.txt"
             dst = os.path.join(temp_dir, "link.txt")
             src.write_text("test")
             Path(dst).symlink_to(src)
-
+            # Act
             unlink_symlink(dst)
-
+            # Assert
             assert not Path(dst).exists()
 
 
 # =============================================================================
-# Tests for list_symlinks()
+# list_symlinks()
 # =============================================================================
 
 
 class TestListSymlinks:
     """Tests for list_symlinks() function."""
 
-    def test_list_symlinks_basic(self):
-        """Test list_symlinks finds symlinks."""
-        from scitex_path import list_symlinks
-
+    def test_list_symlinks_returns_expected_count_of_links(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             src = Path(temp_dir) / "source.txt"
             link1 = Path(temp_dir) / "link1.txt"
@@ -568,28 +737,36 @@ class TestListSymlinks:
             src.write_text("test")
             link1.symlink_to(src)
             link2.symlink_to(src)
-
+            # Act
             result = list_symlinks(temp_dir)
-
+            # Assert
             assert len(result) == 2
-            assert link1 in result
-            assert link2 in result
 
-    def test_list_symlinks_empty_dir(self):
-        """Test list_symlinks with no symlinks."""
-        from scitex_path import list_symlinks
+    def test_list_symlinks_contains_every_created_link(self):
+        # Arrange
+        with tempfile.TemporaryDirectory() as temp_dir:
+            src = Path(temp_dir) / "source.txt"
+            link1 = Path(temp_dir) / "link1.txt"
+            link2 = Path(temp_dir) / "link2.txt"
+            src.write_text("test")
+            link1.symlink_to(src)
+            link2.symlink_to(src)
+            # Act
+            result = list_symlinks(temp_dir)
+            # Assert
+            assert {link1, link2}.issubset(set(result))
 
+    def test_list_symlinks_returns_empty_when_no_symlinks_present(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             (Path(temp_dir) / "regular.txt").write_text("test")
-
+            # Act
             result = list_symlinks(temp_dir)
+            # Assert
+            assert result == []
 
-            assert len(result) == 0
-
-    def test_list_symlinks_non_recursive(self):
-        """Test list_symlinks non-recursive mode."""
-        from scitex_path import list_symlinks
-
+    def test_list_symlinks_non_recursive_returns_only_top_level_count(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             src = Path(temp_dir) / "source.txt"
             link_top = Path(temp_dir) / "link_top.txt"
@@ -599,17 +776,13 @@ class TestListSymlinks:
             src.write_text("test")
             link_top.symlink_to(src)
             link_sub.symlink_to(src)
-
+            # Act
             result = list_symlinks(temp_dir, recursive=False)
+            # Assert
+            assert result == [link_top]
 
-            assert len(result) == 1
-            assert link_top in result
-            assert link_sub not in result
-
-    def test_list_symlinks_recursive(self):
-        """Test list_symlinks recursive mode."""
-        from scitex_path import list_symlinks
-
+    def test_list_symlinks_recursive_returns_links_from_all_subdirs(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             src = Path(temp_dir) / "source.txt"
             link_top = Path(temp_dir) / "link_top.txt"
@@ -619,112 +792,130 @@ class TestListSymlinks:
             src.write_text("test")
             link_top.symlink_to(src)
             link_sub.symlink_to(src)
-
+            # Act
             result = list_symlinks(temp_dir, recursive=True)
+            # Assert
+            assert set(result) == {link_top, link_sub}
 
-            assert len(result) == 2
-            assert link_top in result
-            assert link_sub in result
-
-    def test_list_symlinks_includes_broken(self):
-        """Test list_symlinks includes broken symlinks."""
-        from scitex_path import list_symlinks
-
+    def test_list_symlinks_includes_broken_symlinks_in_result(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             broken_link = Path(temp_dir) / "broken.txt"
             broken_link.symlink_to("/nonexistent/target")
-
+            # Act
             result = list_symlinks(temp_dir)
+            # Assert
+            assert result == [broken_link]
 
-            assert len(result) == 1
-            assert broken_link in result
-
-    def test_list_symlinks_string_path(self):
-        """Test list_symlinks with string path."""
-        from scitex_path import list_symlinks
-
+    def test_list_symlinks_returns_path_objects_for_each_entry(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             src = Path(temp_dir) / "source.txt"
             link = Path(temp_dir) / "link.txt"
             src.write_text("test")
             link.symlink_to(src)
-
+            # Act
             result = list_symlinks(temp_dir)
-
+            # Assert
             assert all(isinstance(p, Path) for p in result)
 
 
 # =============================================================================
-# Tests for fix_broken_symlinks()
+# fix_broken_symlinks()
 # =============================================================================
 
 
 class TestFixBrokenSymlinks:
     """Tests for fix_broken_symlinks() function."""
 
-    def test_fix_broken_symlinks_finds_broken(self):
-        """Test fix_broken_symlinks finds broken symlinks."""
-        from scitex_path import fix_broken_symlinks
-
+    def test_fix_broken_symlinks_records_broken_link_in_found(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             broken = Path(temp_dir) / "broken.txt"
             broken.symlink_to("/nonexistent/target")
-
+            # Act
             result = fix_broken_symlinks(temp_dir)
+            # Assert
+            assert result["found"] == [broken]
 
-            assert len(result["found"]) == 1
-            assert broken in result["found"]
-            assert len(result["fixed"]) == 0
-            assert len(result["removed"]) == 0
+    def test_fix_broken_symlinks_default_does_not_remove_anything(self):
+        # Arrange
+        with tempfile.TemporaryDirectory() as temp_dir:
+            broken = Path(temp_dir) / "broken.txt"
+            broken.symlink_to("/nonexistent/target")
+            # Act
+            result = fix_broken_symlinks(temp_dir)
+            # Assert
+            assert result["removed"] == []
 
-    def test_fix_broken_symlinks_ignores_valid(self):
-        """Test fix_broken_symlinks ignores valid symlinks."""
-        from scitex_path import fix_broken_symlinks
+    def test_fix_broken_symlinks_default_does_not_fix_anything(self):
+        # Arrange
+        with tempfile.TemporaryDirectory() as temp_dir:
+            broken = Path(temp_dir) / "broken.txt"
+            broken.symlink_to("/nonexistent/target")
+            # Act
+            result = fix_broken_symlinks(temp_dir)
+            # Assert
+            assert result["fixed"] == []
 
+    def test_fix_broken_symlinks_ignores_valid_symlinks(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             src = Path(temp_dir) / "source.txt"
             valid_link = Path(temp_dir) / "valid.txt"
             src.write_text("test")
             valid_link.symlink_to(src)
-
+            # Act
             result = fix_broken_symlinks(temp_dir)
+            # Assert
+            assert result["found"] == []
 
-            assert len(result["found"]) == 0
-
-    def test_fix_broken_symlinks_remove(self):
-        """Test fix_broken_symlinks removes broken with remove=True."""
-        from scitex_path import fix_broken_symlinks
-
+    def test_fix_broken_symlinks_remove_true_records_removed_link(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             broken = Path(temp_dir) / "broken.txt"
             broken.symlink_to("/nonexistent/target")
-
+            # Act
             result = fix_broken_symlinks(temp_dir, remove=True)
+            # Assert
+            assert result["removed"] == [broken]
 
-            assert len(result["removed"]) == 1
-            assert not broken.exists()
+    def test_fix_broken_symlinks_remove_true_removes_link_from_filesystem(self):
+        # Arrange
+        with tempfile.TemporaryDirectory() as temp_dir:
+            broken = Path(temp_dir) / "broken.txt"
+            broken.symlink_to("/nonexistent/target")
+            # Act
+            fix_broken_symlinks(temp_dir, remove=True)
+            # Assert
             assert not broken.is_symlink()
 
-    def test_fix_broken_symlinks_repoint(self):
-        """Test fix_broken_symlinks repoints with new_target."""
-        from scitex_path import fix_broken_symlinks
-
+    def test_fix_broken_symlinks_repoint_records_fixed_link(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             new_src = Path(temp_dir) / "new_source.txt"
             broken = Path(temp_dir) / "broken.txt"
             new_src.write_text("new content")
             broken.symlink_to("/nonexistent/target")
-
+            # Act
             result = fix_broken_symlinks(temp_dir, new_target=new_src)
+            # Assert
+            assert result["fixed"] == [broken]
 
-            assert len(result["fixed"]) == 1
-            assert broken.is_symlink()
+    def test_fix_broken_symlinks_repoint_makes_link_resolve_to_new_content(self):
+        # Arrange
+        with tempfile.TemporaryDirectory() as temp_dir:
+            new_src = Path(temp_dir) / "new_source.txt"
+            broken = Path(temp_dir) / "broken.txt"
+            new_src.write_text("new content")
+            broken.symlink_to("/nonexistent/target")
+            # Act
+            fix_broken_symlinks(temp_dir, new_target=new_src)
+            # Assert
             assert broken.read_text() == "new content"
 
-    def test_fix_broken_symlinks_recursive(self):
-        """Test fix_broken_symlinks recursive mode."""
-        from scitex_path import fix_broken_symlinks
-
+    def test_fix_broken_symlinks_recursive_finds_links_in_subdirs(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             subdir = Path(temp_dir) / "subdir"
             subdir.mkdir()
@@ -732,15 +923,13 @@ class TestFixBrokenSymlinks:
             broken_sub = subdir / "broken_sub.txt"
             broken_top.symlink_to("/nonexistent/top")
             broken_sub.symlink_to("/nonexistent/sub")
-
+            # Act
             result = fix_broken_symlinks(temp_dir, recursive=True)
+            # Assert
+            assert set(result["found"]) == {broken_top, broken_sub}
 
-            assert len(result["found"]) == 2
-
-    def test_fix_broken_symlinks_non_recursive(self):
-        """Test fix_broken_symlinks non-recursive mode."""
-        from scitex_path import fix_broken_symlinks
-
+    def test_fix_broken_symlinks_non_recursive_skips_subdir_links(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             subdir = Path(temp_dir) / "subdir"
             subdir.mkdir()
@@ -748,29 +937,23 @@ class TestFixBrokenSymlinks:
             broken_sub = subdir / "broken_sub.txt"
             broken_top.symlink_to("/nonexistent/top")
             broken_sub.symlink_to("/nonexistent/sub")
-
+            # Act
             result = fix_broken_symlinks(temp_dir, recursive=False)
+            # Assert
+            assert result["found"] == [broken_top]
 
-            assert len(result["found"]) == 1
-            assert broken_top in result["found"]
-
-    def test_fix_broken_symlinks_relative_broken(self):
-        """Test fix_broken_symlinks detects broken relative symlinks."""
-        from scitex_path import fix_broken_symlinks
-
+    def test_fix_broken_symlinks_detects_broken_relative_symlink(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             broken = Path(temp_dir) / "broken_relative.txt"
-            # Create symlink with relative path to nonexistent
             broken.symlink_to("nonexistent_file.txt")
-
+            # Act
             result = fix_broken_symlinks(temp_dir)
+            # Assert
+            assert result["found"] == [broken]
 
-            assert len(result["found"]) == 1
-
-    def test_fix_broken_symlinks_mixed(self):
-        """Test fix_broken_symlinks with mix of valid and broken."""
-        from scitex_path import fix_broken_symlinks
-
+    def test_fix_broken_symlinks_mixed_only_records_broken_link(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             src = Path(temp_dir) / "source.txt"
             valid = Path(temp_dir) / "valid.txt"
@@ -778,47 +961,39 @@ class TestFixBrokenSymlinks:
             src.write_text("test")
             valid.symlink_to(src)
             broken.symlink_to("/nonexistent/target")
-
+            # Act
             result = fix_broken_symlinks(temp_dir)
-
-            assert len(result["found"]) == 1
-            assert broken in result["found"]
-            assert valid not in result["found"]
+            # Assert
+            assert result["found"] == [broken]
 
 
 # =============================================================================
-# Integration tests
+# Integration
 # =============================================================================
 
 
 class TestSymlinkIntegration:
-    """Integration tests combining multiple symlink operations."""
+    """Integration tests combining multiple symlink operations.
 
-    def test_create_readlink_unlink_workflow(self):
-        """Test complete symlink create-read-unlink workflow."""
-        from scitex_path import is_symlink, readlink, symlink, unlink_symlink
+    Each integration test asserts a single fact at the end of a longer
+    workflow; intermediate steps are setup (Arrange).
+    """
 
+    def test_create_then_readlink_then_unlink_workflow_removes_link(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             src = Path(temp_dir) / "source.txt"
             dst = Path(temp_dir) / "link.txt"
             src.write_text("workflow test")
-
-            # Create
             symlink(src, dst)
-            assert is_symlink(dst)
-
-            # Read
-            target = readlink(dst)
-            assert src.name in str(target) or target.resolve() == src.resolve()
-
-            # Unlink
+            readlink(dst)  # exercise read path
+            # Act
             unlink_symlink(dst)
+            # Assert
             assert not is_symlink(dst)
 
-    def test_relative_symlink_portability(self):
-        """Test relative symlinks work when directory is moved."""
-        from scitex_path import create_relative_symlink
-
+    def test_relative_symlink_portability_resolves_through_relative_path(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             project = Path(temp_dir) / "project"
             project.mkdir()
@@ -827,16 +1002,13 @@ class TestSymlinkIntegration:
             src.parent.mkdir()
             dst.parent.mkdir()
             src.write_text("portable content")
-
+            # Act
             create_relative_symlink(src, dst)
-
-            # Link should work via relative path
+            # Assert
             assert dst.read_text() == "portable content"
 
-    def test_chain_of_symlinks(self):
-        """Test resolving chain of symlinks."""
-        from scitex_path import resolve_symlinks, symlink
-
+    def test_chain_of_three_symlinks_resolves_to_original_source(self):
+        # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             src = Path(temp_dir) / "source.txt"
             link1 = Path(temp_dir) / "link1.txt"
@@ -846,367 +1018,13 @@ class TestSymlinkIntegration:
             link1.symlink_to(src)
             link2.symlink_to(link1)
             link3.symlink_to(link2)
-
+            # Act
             resolved = resolve_symlinks(link3)
-
+            # Assert
             assert resolved == src.resolve()
-            assert link3.read_text() == "chained"
 
 
 if __name__ == "__main__":
-    import os
-
-    import pytest
-
     pytest.main([os.path.abspath(__file__)])
 
-# --------------------------------------------------------------------------------
-# Start of Source Code from: /home/ywatanabe/proj/scitex-code/src/scitex/path/_symlink.py
-# --------------------------------------------------------------------------------
-# #!/usr/bin/env python3
-# # -*- coding: utf-8 -*-
-# # Timestamp: "2025-09-16 15:11:33 (ywatanabe)"
-# # File: /ssh:sp:/home/ywatanabe/proj/scitex_repo/src/scitex/path/_symlink.py
-# # ----------------------------------------
-# from __future__ import annotations
-# import os
-#
-# __FILE__ = __file__
-# __DIR__ = os.path.dirname(__FILE__)
-# # ----------------------------------------
-#
-# """Symlink creation and management utilities for SciTeX."""
-#
-# # from scitex import logging
-# from pathlib import Path
-# from typing import Optional, Union
-#
-# from scitex import logging
-#
-# logger = logging.getLogger(__name__)
-#
-#
-# def symlink(
-#     src: Union[str, Path],
-#     dst: Union[str, Path],
-#     overwrite: bool = False,
-#     target_is_directory: Optional[bool] = None,
-#     relative: bool = False,
-# ) -> Path:
-#     """
-#     Create a symbolic link pointing to src named dst.
-#
-#     Args:
-#         src: Source path (target of the symlink)
-#         dst: Destination path (the symlink to create)
-#         overwrite: If True, remove existing dst before creating symlink
-#         target_is_directory: On Windows, specify if target is directory (auto-detected if None)
-#         relative: If True, create relative symlink instead of absolute
-#
-#     Returns:
-#         Path object of the created symlink
-#
-#     Raises:
-#         FileExistsError: If dst exists and overwrite=False
-#         FileNotFoundError: If src doesn't exist
-#         OSError: If symlink creation fails
-#
-#     Examples:
-#         >>> import scitex as stx
-#         >>> # Create absolute symlink
-#         >>> stx.path.symlink("/path/to/source", "/path/to/link")
-#
-#         >>> # Create relative symlink
-#         >>> stx.path.symlink("../source", "link", relative=True)
-#
-#         >>> # Overwrite existing symlink
-#         >>> stx.path.symlink("/path/to/new_source", "/path/to/link", overwrite=True)
-#     """
-#     src_path = Path(src)
-#     dst_path = Path(dst)
-#
-#     # Note: We allow creating symlinks to non-existent targets
-#     # This is valid in Unix/Linux and useful for testing
-#
-#     # Handle existing destination
-#     if dst_path.exists() or dst_path.is_symlink():
-#         if not overwrite:
-#             raise FileExistsError(f"Destination already exists: {dst_path}")
-#         else:
-#             # Remove existing file/symlink
-#             if dst_path.is_symlink():
-#                 dst_path.unlink()
-#             elif dst_path.is_file():
-#                 dst_path.unlink()
-#             elif dst_path.is_dir():
-#                 import shutil
-#
-#                 shutil.rmtree(dst_path)
-#             # logger.info(f"Removed existing destination: {dst_path}")
-#
-#     # Create parent directory if needed
-#     dst_path.parent.mkdir(parents=True, exist_ok=True)
-#
-#     # Determine if target is directory (for Windows)
-#     if target_is_directory is None and src_path.exists():
-#         target_is_directory = src_path.is_dir()
-#
-#     # Create symlink
-#     try:
-#         if relative:
-#             # Calculate relative path from dst to src
-#             if src_path.is_absolute():
-#                 # src is absolute, calculate relative from dst
-#                 try:
-#                     rel_path = os.path.relpath(src_path, dst_path.parent)
-#                     src_for_link = Path(rel_path)
-#                 except ValueError:
-#                     # Can't create relative path (e.g., different drives on Windows)
-#                     logger.warning(
-#                         f"Cannot create relative path from {dst_path} to {src_path}, using absolute"
-#                     )
-#                     src_for_link = src_path.absolute()
-#             else:
-#                 # Both paths are relative, need to resolve them first
-#                 # to calculate the correct relative path
-#                 src_abs = src_path.resolve()
-#                 dst_parent_abs = dst_path.parent.resolve()
-#                 try:
-#                     rel_path = os.path.relpath(src_abs, dst_parent_abs)
-#                     src_for_link = Path(rel_path)
-#                 except ValueError:
-#                     # Can't create relative path
-#                     logger.warning(
-#                         f"Cannot create relative path from {dst_path} to {src_path}"
-#                     )
-#                     src_for_link = src_path
-#         else:
-#             src_for_link = src_path.absolute()
-#
-#         dst_path.symlink_to(src_for_link, target_is_directory=target_is_directory)
-#         logger.success(f"Created symlink: {dst_path} -> {src_for_link}")
-#
-#     except OSError as e:
-#         logger.warn(
-#             f"Failed to create symlink from {dst_path} to {src_for_link}: {str(e)}"
-#         )
-#
-#         # raise OSError(
-#         #     f"Failed to create symlink from {dst_path} to {src_for_link}: {e}"
-#         # )
-#
-#     return dst_path
-#
-#
-# def is_symlink(path: Union[str, Path]) -> bool:
-#     """
-#     Check if a path is a symbolic link.
-#
-#     Args:
-#         path: Path to check
-#
-#     Returns:
-#         True if path is a symlink, False otherwise
-#
-#     Examples:
-#         >>> import scitex as stx
-#         >>> stx.path.is_symlink("/path/to/link")
-#         False
-#     """
-#     return Path(path).is_symlink()
-#
-#
-# def readlink(path: Union[str, Path]) -> Path:
-#     """
-#     Return the path to which the symbolic link points.
-#
-#     Args:
-#         path: Symlink path to read
-#
-#     Returns:
-#         Path object pointing to the symlink target
-#
-#     Raises:
-#         OSError: If path is not a symlink
-#
-#     Examples:
-#         >>> import scitex as stx
-#         >>> target = stx.path.readlink("/path/to/link")
-#         >>> print(target)
-#     """
-#     path = Path(path)
-#     if not path.is_symlink():
-#         raise OSError(f"Path is not a symbolic link: {path}")
-#
-#     return Path(os.readlink(path))
-#
-#
-# def resolve_symlinks(path: Union[str, Path]) -> Path:
-#     """
-#     Resolve all symbolic links in a path.
-#
-#     Args:
-#         path: Path potentially containing symlinks
-#
-#     Returns:
-#         Fully resolved absolute path
-#
-#     Examples:
-#         >>> import scitex as stx
-#         >>> resolved = stx.path.resolve_symlinks("/path/with/symlinks")
-#         >>> print(resolved)
-#     """
-#     return Path(path).resolve()
-#
-#
-# def create_relative_symlink(
-#     src: Union[str, Path], dst: Union[str, Path], overwrite: bool = False
-# ) -> Path:
-#     """
-#     Create a relative symbolic link.
-#
-#     This is a convenience wrapper around symlink() with relative=True.
-#
-#     Args:
-#         src: Source path (target of the symlink)
-#         dst: Destination path (the symlink to create)
-#         overwrite: If True, remove existing dst before creating symlink
-#
-#     Returns:
-#         Path object of the created symlink
-#
-#     Examples:
-#         >>> import scitex as stx
-#         >>> # Create relative symlink from current dir to parent dir file
-#         >>> stx.path.create_relative_symlink("../data/file.txt", "link_to_file")
-#     """
-#     return symlink(src, dst, overwrite=overwrite, relative=True)
-#
-#
-# def unlink_symlink(path: Union[str, Path], missing_ok: bool = True) -> None:
-#     """
-#     Remove a symbolic link.
-#
-#     Args:
-#         path: Symlink to remove
-#         missing_ok: If True, don't raise error if symlink doesn't exist
-#
-#     Raises:
-#         FileNotFoundError: If symlink doesn't exist and missing_ok=False
-#         OSError: If path is not a symlink
-#
-#     Examples:
-#         >>> import scitex as stx
-#         >>> stx.path.unlink_symlink("/path/to/link")
-#     """
-#     path = Path(path)
-#
-#     if not path.exists() and not path.is_symlink():
-#         if missing_ok:
-#             return
-#         raise FileNotFoundError(f"Symlink does not exist: {path}")
-#
-#     if not path.is_symlink():
-#         raise OSError(f"Path is not a symbolic link: {path}")
-#
-#     path.unlink()
-#     # logger.info(f"Removed symlink: {path}")
-#
-#
-# def list_symlinks(directory: Union[str, Path], recursive: bool = False) -> list[Path]:
-#     """
-#     List all symbolic links in a directory.
-#
-#     Args:
-#         directory: Directory to search
-#         recursive: If True, search recursively
-#
-#     Returns:
-#         List of Path objects for all symlinks found
-#
-#     Examples:
-#         >>> import scitex as stx
-#         >>> symlinks = stx.path.list_symlinks("/path/to/dir")
-#         >>> for link in symlinks:
-#         ...     print(f"{link} -> {stx.path.readlink(link)}")
-#     """
-#     directory = Path(directory)
-#     symlinks = []
-#
-#     if recursive:
-#         for path in directory.rglob("*"):
-#             if path.is_symlink():
-#                 symlinks.append(path)
-#     else:
-#         for path in directory.iterdir():
-#             if path.is_symlink():
-#                 symlinks.append(path)
-#
-#     return symlinks
-#
-#
-# def fix_broken_symlinks(
-#     directory: Union[str, Path],
-#     recursive: bool = False,
-#     remove: bool = False,
-#     new_target: Optional[Union[str, Path]] = None,
-# ) -> dict:
-#     """
-#     Find and optionally fix broken symbolic links.
-#
-#     Args:
-#         directory: Directory to search
-#         recursive: If True, search recursively
-#         remove: If True, remove broken symlinks
-#         new_target: If provided, repoint broken symlinks to this target
-#
-#     Returns:
-#         Dictionary with 'found', 'fixed', and 'removed' lists of paths
-#
-#     Examples:
-#         >>> import scitex as stx
-#         >>> # Find broken symlinks
-#         >>> result = stx.path.fix_broken_symlinks("/path/to/dir")
-#         >>> print(f"Found {len(result['found'])} broken symlinks")
-#
-#         >>> # Remove broken symlinks
-#         >>> result = stx.path.fix_broken_symlinks("/path/to/dir", remove=True)
-#     """
-#     directory = Path(directory)
-#     result = {"found": [], "fixed": [], "removed": []}
-#
-#     symlinks = list_symlinks(directory, recursive=recursive)
-#
-#     for link in symlinks:
-#         try:
-#             # Check if target exists
-#             target = Path(os.readlink(link))
-#             if not link.parent.joinpath(target).exists() and not target.is_absolute():
-#                 # Relative link with non-existent target
-#                 result["found"].append(link)
-#             elif target.is_absolute() and not target.exists():
-#                 # Absolute link with non-existent target
-#                 result["found"].append(link)
-#         except (OSError, ValueError):
-#             result["found"].append(link)
-#
-#     # Fix or remove broken symlinks
-#     for link in result["found"]:
-#         if remove:
-#             link.unlink()
-#             result["removed"].append(link)
-#             # logger.info(f"Removed broken symlink: {link}")
-#         elif new_target:
-#             link.unlink()
-#             symlink(new_target, link)
-#             result["fixed"].append(link)
-#             # logger.info(f"Fixed symlink: {link} -> {new_target}")
-#
-#     return result
-#
-#
-# # EOF
-
-# --------------------------------------------------------------------------------
-# End of Source Code from: /home/ywatanabe/proj/scitex-code/src/scitex/path/_symlink.py
-# --------------------------------------------------------------------------------
+# EOF

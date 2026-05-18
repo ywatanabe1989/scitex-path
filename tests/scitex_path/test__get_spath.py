@@ -10,11 +10,15 @@ deprecated public name still resolves to the same callable.
 from __future__ import annotations
 
 
-def test_get_spath_is_mk_spath_alias():
+def test_get_spath_resolves_to_same_callable_as_mk_spath():
+    # Arrange
     from scitex_path import get_spath
     from scitex_path._mk_spath import mk_spath
 
-    assert get_spath is mk_spath
+    # Act
+    same = get_spath is mk_spath
+    # Assert
+    assert same is True
 
 
 # EOF

@@ -1,236 +1,268 @@
 #!/usr/bin/env python3
 # Time-stamp: "2024-11-08 05:53:10 (ywatanabe)"
-# File: ./scitex_repo/tests/scitex/path/test__get_module_path.py
+# File: ./tests/scitex_path/test__get_module_path.py
 
+"""Tests for ``scitex_path.get_data_path_from_a_package``.
+
+PA-306: no ``unittest.mock``, no ``monkeypatch``. Collaborators
+(``importlib.util.find_spec`` and ``Path.exists``) are swapped at the
+module namespace level via real save/restore context managers.
+
+STX-TQ001 / 002 / 003 / 007: every test asserts exactly one fact, has
+the three AAA marker comments, and has a descriptive multi-token name.
 """
-Tests for get_module_path functionality.
-"""
+
+from __future__ import annotations
 
 import os
-from unittest.mock import Mock, patch
+from contextlib import contextmanager
+from pathlib import Path
+from typing import Any, Callable, Iterator
 
 import pytest
 
+import scitex_path._get_module_path as _gmp_mod
 from scitex_path import get_data_path_from_a_package
 
+# ---------------------------------------------------------------------------
+# Lightweight stand-in for ModuleSpec
+# ---------------------------------------------------------------------------
 
-class TestGetDataPathFromAPackage:
-    """Test get_data_path_from_a_package function."""
 
-    def test_get_data_path_success(self):
-        """Test successful retrieval of data path."""
-        from pathlib import Path
+class _FakeSpec:
+    def __init__(self, origin: str) -> None:
+        self.origin = origin
 
-        mock_spec = Mock()
-        mock_spec.origin = "/home/user/project/src/mypackage/__init__.py"
 
-        with patch("importlib.util.find_spec", return_value=mock_spec):
-            with patch("pathlib.Path.exists", return_value=True):
-                result = get_data_path_from_a_package("mypackage", "test_data.txt")
+# ---------------------------------------------------------------------------
+# Collaborator swaps (test seams — no mocks, no monkeypatch)
+# ---------------------------------------------------------------------------
 
-                assert result == Path("/home/user/project/data/test_data.txt")
 
-    def test_get_data_path_package_not_found(self):
-        """Test when package is not found."""
-        with patch("importlib.util.find_spec", return_value=None):
-            with pytest.raises(ImportError, match="Package 'nonexistent' not found"):
-                get_data_path_from_a_package("nonexistent", "data.txt")
+@contextmanager
+def _swap_find_spec(fn: Callable[[str], Any]) -> Iterator[None]:
+    """Replace ``importlib.util.find_spec`` as seen by the module."""
+    import importlib.util as iu
 
-    def test_get_data_path_resource_not_found(self):
-        """Test when resource file is not found."""
-        mock_spec = Mock()
-        mock_spec.origin = "/home/user/project/src/mypackage/__init__.py"
+    saved = iu.find_spec
+    iu.find_spec = fn  # type: ignore[assignment]
+    try:
+        yield
+    finally:
+        iu.find_spec = saved  # type: ignore[assignment]
 
-        with patch("importlib.util.find_spec", return_value=mock_spec):
-            with patch("pathlib.Path.exists", return_value=False):
-                with pytest.raises(
-                    FileNotFoundError, match="Resource 'missing.txt' not found"
-                ):
-                    get_data_path_from_a_package("mypackage", "missing.txt")
 
-    def test_get_data_path_various_origins(self):
-        """Test with various package origin formats (Unix paths only on Linux)."""
-        from pathlib import Path
+@contextmanager
+def _swap_path_exists(fn: Callable[[Path], bool]) -> Iterator[None]:
+    """Replace ``Path.exists`` as seen by the module under test."""
+    saved = _gmp_mod.Path.exists
+    _gmp_mod.Path.exists = fn  # type: ignore[assignment]
+    try:
+        yield
+    finally:
+        _gmp_mod.Path.exists = saved  # type: ignore[assignment]
 
-        test_cases = [
-            (
-                "/usr/lib/python3.9/site-packages/src/pkg/__init__.py",
-                "/usr/lib/python3.9/site-packages/data",
-            ),
-            ("/home/user/src/myapp/module.py", "/home/user/data"),
-        ]
 
-        for origin, expected_data_dir in test_cases:
-            mock_spec = Mock()
-            mock_spec.origin = origin
+# ---------------------------------------------------------------------------
+# Successful resolution
+# ---------------------------------------------------------------------------
 
-            with patch("importlib.util.find_spec", return_value=mock_spec):
-                with patch("pathlib.Path.exists", return_value=True):
-                    result = get_data_path_from_a_package("testpkg", "file.txt")
 
-                    assert result == Path(expected_data_dir) / "file.txt"
+def test_get_data_path_resolves_under_data_dir_when_src_in_origin():
+    # Arrange
+    def fake_find_spec(_pkg: str) -> _FakeSpec:
+        return _FakeSpec("/home/user/project/src/mypackage/__init__.py")
 
-    def test_get_data_path_no_src_in_path(self):
-        """Test when 'src' is not in the package path — loop walks to
-        filesystem root, then picks root.parent/'data'."""
-        mock_spec = Mock()
-        mock_spec.origin = "/home/user/project/mypackage/__init__.py"
+    def always_exists(_self: Path) -> bool:
+        return True
 
-        with patch("importlib.util.find_spec", return_value=mock_spec):
-            with patch("pathlib.Path.exists", return_value=True):
-                result = get_data_path_from_a_package("mypackage", "test.txt")
-                assert "data" in str(result)
+    # Act
+    with _swap_find_spec(fake_find_spec), _swap_path_exists(always_exists):
+        result = get_data_path_from_a_package("mypackage", "test_data.txt")
+    # Assert
+    assert result == Path("/home/user/project/data/test_data.txt")
 
-    def test_get_data_path_nested_resource(self):
-        """Test with nested resource path."""
-        mock_spec = Mock()
-        mock_spec.origin = "/home/user/project/src/mypackage/__init__.py"
 
-        with patch("importlib.util.find_spec", return_value=mock_spec):
-            with patch("pathlib.Path.exists", return_value=True):
-                result = get_data_path_from_a_package(
-                    "mypackage", "subdir/test_data.csv"
-                )
+# ---------------------------------------------------------------------------
+# Missing package
+# ---------------------------------------------------------------------------
 
-                expected_path = os.path.join(
-                    "/home/user/project/data", "subdir/test_data.csv"
-                )
-                assert str(result) == expected_path
 
-    def test_get_data_path_empty_resource(self):
-        """Test with empty resource name."""
-        mock_spec = Mock()
-        mock_spec.origin = "/home/user/project/src/mypackage/__init__.py"
+def test_get_data_path_raises_import_error_when_package_not_found():
+    # Arrange
+    def fake_find_spec(_pkg: str) -> Any:
+        return None
 
-        with patch("importlib.util.find_spec", return_value=mock_spec):
-            with patch("pathlib.Path.exists", return_value=True):
-                result = get_data_path_from_a_package("mypackage", "")
+    # Act
+    ctx = pytest.raises(ImportError, match="Package 'nonexistent' not found")
+    # Assert
+    with _swap_find_spec(fake_find_spec), ctx:
+        get_data_path_from_a_package("nonexistent", "data.txt")
 
-                # Path drops the empty segment (unlike os.path.join which adds /).
-                assert str(result) == "/home/user/project/data"
 
-    def test_get_data_path_multiple_src_in_path(self):
-        """Test when 'src' appears multiple times in path — the loop stops
-        at the innermost `src/` directory (nearest to the package)."""
-        mock_spec = Mock()
-        mock_spec.origin = "/home/user/src/project/src/mypackage/__init__.py"
+# ---------------------------------------------------------------------------
+# Missing resource file
+# ---------------------------------------------------------------------------
 
-        with patch("importlib.util.find_spec", return_value=mock_spec):
-            with patch("pathlib.Path.exists", return_value=True):
-                result = get_data_path_from_a_package("mypackage", "data.json")
 
-                assert str(result) == "/home/user/src/project/data/data.json"
+def test_get_data_path_raises_file_not_found_when_resource_missing():
+    # Arrange
+    def fake_find_spec(_pkg: str) -> _FakeSpec:
+        return _FakeSpec("/home/user/project/src/mypackage/__init__.py")
 
-    def test_get_data_path_case_sensitivity(self):
-        """Test case sensitivity of 'src' in path."""
-        mock_spec = Mock()
-        mock_spec.origin = "/home/user/SRC/mypackage/__init__.py"
+    def never_exists(_self: Path) -> bool:
+        return False
 
-        with patch("importlib.util.find_spec", return_value=mock_spec):
-            with patch("pathlib.Path.exists", return_value=True):
-                # 'SRC' won't match 'src' in split
-                result = get_data_path_from_a_package("mypackage", "test.txt")
-                # Will append 'data' to the full path
-                assert str(result).endswith("data/test.txt")
+    # Act
+    ctx = pytest.raises(FileNotFoundError, match="Resource 'missing.txt' not found")
+    # Assert
+    with _swap_find_spec(fake_find_spec), _swap_path_exists(never_exists), ctx:
+        get_data_path_from_a_package("mypackage", "missing.txt")
 
-    def test_get_data_path_special_characters(self):
-        """Test with special characters in paths."""
-        mock_spec = Mock()
-        mock_spec.origin = "/home/user-name/project@1.0/src/my-package/__init__.py"
 
-        with patch("importlib.util.find_spec", return_value=mock_spec):
-            with patch("pathlib.Path.exists", return_value=True):
-                result = get_data_path_from_a_package("my-package", "test file.txt")
+# ---------------------------------------------------------------------------
+# Various origin formats — separate test per case so each asserts one thing
+# ---------------------------------------------------------------------------
 
-                expected_path = os.path.join(
-                    "/home/user-name/project@1.0/data", "test file.txt"
-                )
-                assert str(result) == expected_path
 
-    def test_get_data_path_real_package(self):
-        """Test with a real package (if available)."""
-        # Try with a standard library package
-        try:
-            import json
+def test_get_data_path_resolves_under_site_packages_data_dir():
+    # Arrange
+    origin = "/usr/lib/python3.9/site-packages/src/pkg/__init__.py"
+    expected = Path("/usr/lib/python3.9/site-packages/data") / "file.txt"
 
-            mock_spec = Mock()
-            mock_spec.origin = os.path.join(
-                os.path.dirname(json.__file__), "src", "__init__.py"
-            )
+    def fake_find_spec(_pkg: str) -> _FakeSpec:
+        return _FakeSpec(origin)
 
-            with patch("importlib.util.find_spec", return_value=mock_spec):
-                with patch("pathlib.Path.exists", return_value=True):
-                    result = get_data_path_from_a_package("json", "test.json")
-                    assert str(result).endswith("data/test.json")
-        except Exception:
-            # Skip if json module structure is different
-            pytest.skip("Real package test not applicable in this environment")
+    # Act
+    with _swap_find_spec(fake_find_spec), _swap_path_exists(lambda _s: True):
+        result = get_data_path_from_a_package("testpkg", "file.txt")
+    # Assert
+    assert result == expected
+
+
+def test_get_data_path_resolves_under_user_home_data_dir():
+    # Arrange
+    origin = "/home/user/src/myapp/module.py"
+    expected = Path("/home/user/data") / "file.txt"
+
+    def fake_find_spec(_pkg: str) -> _FakeSpec:
+        return _FakeSpec(origin)
+
+    # Act
+    with _swap_find_spec(fake_find_spec), _swap_path_exists(lambda _s: True):
+        result = get_data_path_from_a_package("testpkg", "file.txt")
+    # Assert
+    assert result == expected
+
+
+# ---------------------------------------------------------------------------
+# Fallback when origin lacks ``src/`` boundary
+# ---------------------------------------------------------------------------
+
+
+def test_get_data_path_falls_back_to_data_dir_when_no_src_in_origin():
+    # Arrange
+    def fake_find_spec(_pkg: str) -> _FakeSpec:
+        return _FakeSpec("/home/user/project/mypackage/__init__.py")
+
+    # Act
+    with _swap_find_spec(fake_find_spec), _swap_path_exists(lambda _s: True):
+        result = get_data_path_from_a_package("mypackage", "test.txt")
+    # Assert
+    assert "data" in str(result)
+
+
+# ---------------------------------------------------------------------------
+# Nested resource path
+# ---------------------------------------------------------------------------
+
+
+def test_get_data_path_preserves_nested_resource_subpath():
+    # Arrange
+    expected = os.path.join("/home/user/project/data", "subdir/test_data.csv")
+
+    def fake_find_spec(_pkg: str) -> _FakeSpec:
+        return _FakeSpec("/home/user/project/src/mypackage/__init__.py")
+
+    # Act
+    with _swap_find_spec(fake_find_spec), _swap_path_exists(lambda _s: True):
+        result = get_data_path_from_a_package("mypackage", "subdir/test_data.csv")
+    # Assert
+    assert str(result) == expected
+
+
+# ---------------------------------------------------------------------------
+# Empty resource argument
+# ---------------------------------------------------------------------------
+
+
+def test_get_data_path_with_empty_resource_returns_data_dir_only():
+    # Arrange
+    def fake_find_spec(_pkg: str) -> _FakeSpec:
+        return _FakeSpec("/home/user/project/src/mypackage/__init__.py")
+
+    # Act
+    with _swap_find_spec(fake_find_spec), _swap_path_exists(lambda _s: True):
+        result = get_data_path_from_a_package("mypackage", "")
+    # Assert
+    assert str(result) == "/home/user/project/data"
+
+
+# ---------------------------------------------------------------------------
+# Multiple ``src/`` segments — picks innermost
+# ---------------------------------------------------------------------------
+
+
+def test_get_data_path_uses_innermost_src_when_path_has_multiple_src_segments():
+    # Arrange
+    def fake_find_spec(_pkg: str) -> _FakeSpec:
+        return _FakeSpec("/home/user/src/project/src/mypackage/__init__.py")
+
+    # Act
+    with _swap_find_spec(fake_find_spec), _swap_path_exists(lambda _s: True):
+        result = get_data_path_from_a_package("mypackage", "data.json")
+    # Assert
+    assert str(result) == "/home/user/src/project/data/data.json"
+
+
+# ---------------------------------------------------------------------------
+# Case sensitivity — ``SRC`` is NOT treated as the boundary token
+# ---------------------------------------------------------------------------
+
+
+def test_get_data_path_treats_src_case_sensitively_uppercase_is_not_boundary():
+    # Arrange
+    def fake_find_spec(_pkg: str) -> _FakeSpec:
+        return _FakeSpec("/home/user/SRC/mypackage/__init__.py")
+
+    # Act
+    with _swap_find_spec(fake_find_spec), _swap_path_exists(lambda _s: True):
+        result = get_data_path_from_a_package("mypackage", "test.txt")
+    # Assert
+    assert str(result).endswith("data/test.txt")
+
+
+# ---------------------------------------------------------------------------
+# Special characters in paths
+# ---------------------------------------------------------------------------
+
+
+def test_get_data_path_handles_special_characters_in_origin_and_resource():
+    # Arrange
+    origin = "/home/user-name/project@1.0/src/my-package/__init__.py"
+    expected = os.path.join("/home/user-name/project@1.0/data", "test file.txt")
+
+    def fake_find_spec(_pkg: str) -> _FakeSpec:
+        return _FakeSpec(origin)
+
+    # Act
+    with _swap_find_spec(fake_find_spec), _swap_path_exists(lambda _s: True):
+        result = get_data_path_from_a_package("my-package", "test file.txt")
+    # Assert
+    assert str(result) == expected
 
 
 if __name__ == "__main__":
-    import os
-
-    import pytest
-
     pytest.main([os.path.abspath(__file__)])
 
-# --------------------------------------------------------------------------------
-# Start of Source Code from: /home/ywatanabe/proj/scitex-code/src/scitex/path/_get_module_path.py
-# --------------------------------------------------------------------------------
-# #!/usr/bin/env python3
-# # Timestamp: "2026-01-08 02:00:00 (ywatanabe)"
-# # File: /home/ywatanabe/proj/scitex-code/src/scitex/path/_get_module_path.py
-#
-# """Module path utilities."""
-#
-# import importlib.util
-# from pathlib import Path
-#
-#
-# def get_data_path_from_a_package(package_str: str, resource: str) -> Path:
-#     """Get the path to a data file within a package.
-#
-#     Parameters
-#     ----------
-#     package_str : str
-#         The name of the package as a string.
-#     resource : str
-#         The name of the resource file within the package's data directory.
-#
-#     Returns
-#     -------
-#     Path
-#         The full path to the resource file.
-#
-#     Raises
-#     ------
-#     ImportError
-#         If the specified package cannot be found.
-#     FileNotFoundError
-#         If the resource file does not exist in the package's data directory.
-#     """
-#     spec = importlib.util.find_spec(package_str)
-#     if spec is None:
-#         raise ImportError(f"Package '{package_str}' not found")
-#
-#     origin = Path(spec.origin)
-#     data_dir = origin.parents[0]
-#     while "src" not in str(data_dir) and data_dir != data_dir.parent:
-#         data_dir = data_dir.parent
-#     data_dir = data_dir.parent / "data"
-#
-#     resource_path = data_dir / resource
-#
-#     if not resource_path.exists():
-#         raise FileNotFoundError(
-#             f"Resource '{resource}' not found in package '{package_str}'"
-#         )
-#
-#     return resource_path
-#
-#
-# # EOF
-
-# --------------------------------------------------------------------------------
-# End of Source Code from: /home/ywatanabe/proj/scitex-code/src/scitex/path/_get_module_path.py
-# --------------------------------------------------------------------------------
+# EOF
