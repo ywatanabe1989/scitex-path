@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "scitex-path"
-version = "0.1.5"
+version = "0.1.6"
 description = "Scientific project path utilities (find, split, symlink, versioning)"
 readme = "README.md"
 license = "AGPL-3.0-only"
@@ -31,7 +31,7 @@ dependencies = ["numpy"]
 dev = [
     "pytest",
     "pytest-cov",
-    "scitex-dev>=0.7.0",
+    "scitex-dev>=0.11.7",
 ]
 docs = [
     "sphinx>=7.0",
@@ -62,6 +62,11 @@ packages = ["src/scitex_path"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-x -q"
+
+[tool.coverage.run]
+parallel = true
+source = ["scitex_path"]
+concurrency = ["multiprocessing", "thread"]
 
 [tool.ruff]
 target-version = "py310"

@@ -1,15 +1,5 @@
 # scitex-path
 
-<!-- scitex-badges:start -->
-[![PyPI](https://img.shields.io/pypi/v/scitex-path.svg)](https://pypi.org/project/scitex-path/)
-[![Python](https://img.shields.io/pypi/pyversions/scitex-path.svg)](https://pypi.org/project/scitex-path/)
-[![Tests](https://github.com/ywatanabe1989/scitex-path/actions/workflows/test.yml/badge.svg)](https://github.com/ywatanabe1989/scitex-path/actions/workflows/test.yml)
-[![Install Test](https://github.com/ywatanabe1989/scitex-path/actions/workflows/install-test.yml/badge.svg)](https://github.com/ywatanabe1989/scitex-path/actions/workflows/install-test.yml)
-[![Coverage](https://codecov.io/gh/ywatanabe1989/scitex-path/graph/badge.svg)](https://codecov.io/gh/ywatanabe1989/scitex-path)
-[![Docs](https://readthedocs.org/projects/scitex-path/badge/?version=latest)](https://scitex-path.readthedocs.io/en/latest/)
-[![License: AGPL v3](https://img.shields.io/badge/license-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-<!-- scitex-badges:end -->
-
 <p align="center">
   <a href="https://scitex.ai">
     <img src="docs/scitex-logo-blue-cropped.png" alt="SciTeX" width="400">
@@ -19,8 +9,21 @@
 <p align="center"><b>Scientific project path utilities — find files / git root, symlink mgmt, version increment.</b></p>
 
 <p align="center">
-  <a href="https://scitex-path.readthedocs.io/">Full Documentation</a> · <code>pip install scitex-path</code>
+  <a href="https://scitex-path.readthedocs.io/">Full Documentation</a> · <code>uv pip install scitex-path[all]</code>
 </p>
+
+<!-- scitex-badges:start -->
+<p align="center">
+  <a href="https://pypi.org/project/scitex-path/"><img src="https://img.shields.io/pypi/v/scitex-path?label=pypi" alt="pypi"></a>
+  <a href="https://pypi.org/project/scitex-path/"><img src="https://img.shields.io/pypi/pyversions/scitex-path?label=python" alt="python"></a>
+  <a href="https://github.com/ywatanabe1989/scitex-path/actions/workflows/rtd-sphinx-build-on-ubuntu-latest.yml"><img src="https://img.shields.io/github/actions/workflow/status/ywatanabe1989/scitex-path/rtd-sphinx-build-on-ubuntu-latest.yml?branch=develop&label=docs" alt="docs"></a>
+</p>
+<p align="center">
+  <a href="https://github.com/ywatanabe1989/scitex-path/actions/workflows/pytest-matrix-on-ubuntu-py3-11-3-12-3-13.yml"><img src="https://img.shields.io/github/actions/workflow/status/ywatanabe1989/scitex-path/pytest-matrix-on-ubuntu-py3-11-3-12-3-13.yml?branch=develop&label=tests" alt="tests"></a>
+  <a href="https://github.com/ywatanabe1989/scitex-path/actions/workflows/import-smoke-on-ubuntu-py3-12.yml"><img src="https://img.shields.io/github/actions/workflow/status/ywatanabe1989/scitex-path/import-smoke-on-ubuntu-py3-12.yml?branch=develop&label=install-check" alt="install-check"></a>
+  <a href="https://codecov.io/gh/ywatanabe1989/scitex-path"><img src="https://img.shields.io/codecov/c/github/ywatanabe1989/scitex-path/develop?label=cov" alt="cov"></a>
+</p>
+<!-- scitex-badges:end -->
 
 ---
 
@@ -48,7 +51,7 @@ matches = sp.find_file("*.csv", root="/data/project")
 
 ## 1 Interfaces
 
-<details>
+<details open>
 <summary><strong>Python API</strong></summary>
 
 <br>
@@ -83,6 +86,45 @@ sp.get_spath(filename) / sp.mk_spath(filename)
 ```
 
 </details>
+
+## Architecture
+
+```
+scitex_path/
+├── _find.py              ← find_file, find_dir, find_git_root, find_latest
+├── _split_clean.py       ← split, clean, getsize
+├── _symlink.py           ← symlink, create_relative_symlink,
+│                            list_symlinks, fix_broken_symlinks, resolve_symlinks
+├── _version.py           ← increment_version (semver bumps)
+└── _session.py           ← this_path / get_spath / mk_spath
+                            (caller-script-relative `_out/` dirs)
+```
+
+## Demo
+
+```mermaid
+flowchart LR
+    A[script.py] -->|find_git_root| B[repo root]
+    A -->|mk_spath| C[script_out/]
+    C --> D[results.csv]
+    D -->|create_relative_symlink| E[repo/latest.csv]
+    F[/runs/experiment_v*/] -->|find_latest| G[experiment_v17]
+```
+
+```python
+import scitex_path as sp
+
+root = sp.find_git_root()                          # → /home/me/proj/myrepo
+out  = sp.mk_spath("results.csv")                  # → <script>_out/results.csv
+sp.create_relative_symlink(out, root / "latest.csv")
+print(sp.find_latest("/runs/experiment_v*"))       # → /runs/experiment_v17
+```
+
+```
+/home/me/proj/myrepo
+/home/me/proj/myrepo/scripts/train_out/results.csv
+/runs/experiment_v17
+```
 
 ## Part of SciTeX
 

@@ -22,3 +22,10 @@ env/
 .DS_Store
 .idea/
 .vscode/
+
+# scitex-dev local state: ignore everything under .scitex/ except the
+# tracked dev/config.yaml (audit whitelist for top-level files).
+.scitex/*
+!.scitex/dev/
+.scitex/dev/*
+!.scitex/dev/config.yaml
