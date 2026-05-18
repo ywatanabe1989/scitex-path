@@ -1,333 +1,268 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 # Timestamp: "2025-06-02 12:50:00 (ywatanabe)"
-# File: ./tests/scitex/path/test__increment_version.py
+# File: ./tests/scitex_path/test__increment_version.py
+
+"""Tests for ``scitex_path.increment_version``.
+
+STX-TQ001 / 002 / 003 / 007: every test asserts exactly one fact, carries
+AAA markers, has a descriptive name.
+"""
 
 import os
-import shutil
 import tempfile
 from pathlib import Path
 
 import pytest
 
+from scitex_path import increment_version
 
-def test_increment_version_no_existing_files():
-    """Test increment_version when no versioned files exist."""
-    from scitex_path import increment_version
+# ---------------------------------------------------------------------------
+# No prior versioned files
+# ---------------------------------------------------------------------------
 
+
+def test_increment_version_starts_at_001_when_no_files_exist():
+    # Arrange
     with tempfile.TemporaryDirectory() as tmpdir:
+        # Act
         result = increment_version(tmpdir, "test_file", ".txt")
+        # Assert
+        assert str(result) == os.path.join(tmpdir, "test_file_v001.txt")
 
-        expected = os.path.join(tmpdir, "test_file_v001.txt")
-        assert result == expected
+
+# ---------------------------------------------------------------------------
+# Single existing file
+# ---------------------------------------------------------------------------
 
 
-def test_increment_version_single_existing_file():
-    """Test increment_version with one existing versioned file."""
-    from scitex_path import increment_version
-
+def test_increment_version_increments_to_002_when_v001_exists():
+    # Arrange
     with tempfile.TemporaryDirectory() as tmpdir:
-        # Create an existing versioned file
-        existing = os.path.join(tmpdir, "test_file_v001.txt")
-        Path(existing).touch()
-
+        Path(os.path.join(tmpdir, "test_file_v001.txt")).touch()
+        # Act
         result = increment_version(tmpdir, "test_file", ".txt")
+        # Assert
+        assert str(result) == os.path.join(tmpdir, "test_file_v002.txt")
 
-        expected = os.path.join(tmpdir, "test_file_v002.txt")
-        assert result == expected
+
+# ---------------------------------------------------------------------------
+# Multiple files with gaps in version sequence
+# ---------------------------------------------------------------------------
 
 
-def test_increment_version_multiple_existing_files():
-    """Test increment_version with multiple existing versioned files."""
-    from scitex_path import increment_version
-
+def test_increment_version_returns_max_plus_one_with_sparse_versions():
+    # Arrange
     with tempfile.TemporaryDirectory() as tmpdir:
-        # Create multiple existing versioned files
-        for i in [1, 2, 3, 5, 7]:  # Note: gap in sequence
+        for i in [1, 2, 3, 5, 7]:
             Path(os.path.join(tmpdir, f"test_file_v{i:03d}.txt")).touch()
-
+        # Act
         result = increment_version(tmpdir, "test_file", ".txt")
+        # Assert
+        assert str(result) == os.path.join(tmpdir, "test_file_v008.txt")
 
-        expected = os.path.join(tmpdir, "test_file_v008.txt")
-        assert result == expected
+
+# ---------------------------------------------------------------------------
+# Custom version prefix
+# ---------------------------------------------------------------------------
 
 
-def test_increment_version_custom_prefix():
-    """Test increment_version with custom version prefix."""
-    from scitex_path import increment_version
-
+def test_increment_version_respects_custom_version_prefix():
+    # Arrange
     with tempfile.TemporaryDirectory() as tmpdir:
-        # Create files with custom prefix
         Path(os.path.join(tmpdir, "test_file-ver001.txt")).touch()
         Path(os.path.join(tmpdir, "test_file-ver002.txt")).touch()
-
+        # Act
         result = increment_version(tmpdir, "test_file", ".txt", version_prefix="-ver")
+        # Assert
+        assert str(result) == os.path.join(tmpdir, "test_file-ver003.txt")
 
-        expected = os.path.join(tmpdir, "test_file-ver003.txt")
-        assert result == expected
+
+# ---------------------------------------------------------------------------
+# Extension filtering
+# ---------------------------------------------------------------------------
 
 
-def test_increment_version_different_extensions():
-    """Test increment_version correctly handles different extensions."""
-    from scitex_path import increment_version
-
+def test_increment_version_for_txt_ignores_files_with_csv_extension():
+    # Arrange
     with tempfile.TemporaryDirectory() as tmpdir:
-        # Create files with different extensions
         Path(os.path.join(tmpdir, "test_file_v001.txt")).touch()
         Path(os.path.join(tmpdir, "test_file_v001.csv")).touch()
         Path(os.path.join(tmpdir, "test_file_v002.csv")).touch()
-
-        # Should only consider .txt files
+        # Act
         result_txt = increment_version(tmpdir, "test_file", ".txt")
-        expected_txt = os.path.join(tmpdir, "test_file_v002.txt")
-        assert result_txt == expected_txt
+        # Assert
+        assert str(result_txt) == os.path.join(tmpdir, "test_file_v002.txt")
 
-        # Should only consider .csv files
+
+def test_increment_version_for_csv_ignores_files_with_txt_extension():
+    # Arrange
+    with tempfile.TemporaryDirectory() as tmpdir:
+        Path(os.path.join(tmpdir, "test_file_v001.txt")).touch()
+        Path(os.path.join(tmpdir, "test_file_v001.csv")).touch()
+        Path(os.path.join(tmpdir, "test_file_v002.csv")).touch()
+        # Act
         result_csv = increment_version(tmpdir, "test_file", ".csv")
-        expected_csv = os.path.join(tmpdir, "test_file_v003.csv")
-        assert result_csv == expected_csv
+        # Assert
+        assert str(result_csv) == os.path.join(tmpdir, "test_file_v003.csv")
 
 
-def test_increment_version_special_characters_in_filename():
-    """Test increment_version with special characters in filename.
+# ---------------------------------------------------------------------------
+# Special characters in filename
+# ---------------------------------------------------------------------------
 
-    The implementation uses re.escape() to handle special regex characters.
-    However, glob patterns might not find files with certain special characters.
-    """
-    from scitex_path import increment_version
 
+def test_increment_version_handles_dots_in_base_filename():
+    # Arrange
     with tempfile.TemporaryDirectory() as tmpdir:
-        # Test with filename containing dots (common case)
         fname = "test.file.name"
-        existing_file = os.path.join(tmpdir, f"{fname}_v001.txt")
-        Path(existing_file).touch()
-
+        Path(os.path.join(tmpdir, f"{fname}_v001.txt")).touch()
+        # Act
         result = increment_version(tmpdir, fname, ".txt")
-        expected = os.path.join(tmpdir, f"{fname}_v002.txt")
-        assert result == expected
-
-        # Test with parentheses
-        fname2 = "test_file(1)"
-        existing_file2 = os.path.join(tmpdir, f"{fname2}_v001.txt")
-        Path(existing_file2).touch()
-
-        result2 = increment_version(tmpdir, fname2, ".txt")
-        expected2 = os.path.join(tmpdir, f"{fname2}_v002.txt")
-        assert result2 == expected2
+        # Assert
+        assert str(result) == os.path.join(tmpdir, f"{fname}_v002.txt")
 
 
-def test_increment_version_large_version_numbers():
-    """Test increment_version with large version numbers."""
-    from scitex_path import increment_version
-
+def test_increment_version_handles_parentheses_in_base_filename():
+    # Arrange
     with tempfile.TemporaryDirectory() as tmpdir:
-        # Create file with large version number
+        fname = "test_file(1)"
+        Path(os.path.join(tmpdir, f"{fname}_v001.txt")).touch()
+        # Act
+        result = increment_version(tmpdir, fname, ".txt")
+        # Assert
+        assert str(result) == os.path.join(tmpdir, f"{fname}_v002.txt")
+
+
+# ---------------------------------------------------------------------------
+# Large version numbers
+# ---------------------------------------------------------------------------
+
+
+def test_increment_version_rolls_over_999_to_1000():
+    # Arrange
+    with tempfile.TemporaryDirectory() as tmpdir:
         Path(os.path.join(tmpdir, "test_file_v999.txt")).touch()
-
+        # Act
         result = increment_version(tmpdir, "test_file", ".txt")
+        # Assert
+        assert str(result) == os.path.join(tmpdir, "test_file_v1000.txt")
 
-        expected = os.path.join(tmpdir, "test_file_v1000.txt")
-        assert result == expected
+
+# ---------------------------------------------------------------------------
+# Mix of valid and invalid version filenames
+# ---------------------------------------------------------------------------
 
 
-def test_increment_version_mixed_valid_invalid_files():
-    """Test increment_version with mix of valid and invalid filenames."""
-    from scitex_path import increment_version
-
+def test_increment_version_skips_files_with_nonnumeric_version_token():
+    # Arrange
     with tempfile.TemporaryDirectory() as tmpdir:
-        # Create mix of files
         Path(os.path.join(tmpdir, "test_file_v001.txt")).touch()
         Path(os.path.join(tmpdir, "test_file_v002.txt")).touch()
-        Path(os.path.join(tmpdir, "test_file_vABC.txt")).touch()  # Invalid version
-        Path(os.path.join(tmpdir, "test_file.txt")).touch()  # No version
-        Path(os.path.join(tmpdir, "other_file_v001.txt")).touch()  # Different base
-
+        Path(os.path.join(tmpdir, "test_file_vABC.txt")).touch()
+        Path(os.path.join(tmpdir, "test_file.txt")).touch()
+        Path(os.path.join(tmpdir, "other_file_v001.txt")).touch()
+        # Act
         result = increment_version(tmpdir, "test_file", ".txt")
-
-        expected = os.path.join(tmpdir, "test_file_v003.txt")
-        assert result == expected
-
-
-def test_increment_version_empty_directory_path():
-    """Test increment_version with empty string as directory."""
-    from scitex_path import increment_version
-
-    # Should handle empty dirname gracefully
-    result = increment_version("", "test_file", ".txt")
-    assert result == "test_file_v001.txt"
+        # Assert
+        assert str(result) == os.path.join(tmpdir, "test_file_v003.txt")
 
 
-def test_increment_version_nested_directory():
-    """Test increment_version in nested directory structure."""
-    from scitex_path import increment_version
+# ---------------------------------------------------------------------------
+# Empty directory string
+# ---------------------------------------------------------------------------
 
+
+def test_increment_version_returns_relative_filename_when_dirname_empty():
+    # Arrange
+    dirname = ""
+    # Act
+    result = increment_version(dirname, "test_file", ".txt")
+    # Assert
+    assert str(result) == "test_file_v001.txt"
+
+
+# ---------------------------------------------------------------------------
+# Nested directory
+# ---------------------------------------------------------------------------
+
+
+def test_increment_version_operates_on_nested_directory_path():
+    # Arrange
     with tempfile.TemporaryDirectory() as tmpdir:
-        # Create nested directory
         nested_dir = os.path.join(tmpdir, "sub1", "sub2")
         os.makedirs(nested_dir)
-
-        # Create versioned file in nested directory
         Path(os.path.join(nested_dir, "test_file_v001.txt")).touch()
-
+        # Act
         result = increment_version(nested_dir, "test_file", ".txt")
+        # Assert
+        assert str(result) == os.path.join(nested_dir, "test_file_v002.txt")
 
-        expected = os.path.join(nested_dir, "test_file_v002.txt")
-        assert result == expected
+
+# ---------------------------------------------------------------------------
+# Compound extension
+# ---------------------------------------------------------------------------
 
 
-def test_increment_version_compound_extension():
-    """Test increment_version with compound extensions."""
-    from scitex_path import increment_version
-
+def test_increment_version_handles_compound_tar_gz_extension():
+    # Arrange
     with tempfile.TemporaryDirectory() as tmpdir:
-        # Create file with compound extension
         Path(os.path.join(tmpdir, "test_file_v001.tar.gz")).touch()
-
+        # Act
         result = increment_version(tmpdir, "test_file", ".tar.gz")
+        # Assert
+        assert str(result) == os.path.join(tmpdir, "test_file_v002.tar.gz")
 
-        expected = os.path.join(tmpdir, "test_file_v002.tar.gz")
-        assert result == expected
+
+# ---------------------------------------------------------------------------
+# Similar filenames
+# ---------------------------------------------------------------------------
 
 
-def test_increment_version_similar_filenames():
-    """Test increment_version doesn't confuse similar filenames."""
-    from scitex_path import increment_version
-
+def test_increment_version_only_matches_exact_basename_prefix():
+    # Arrange
     with tempfile.TemporaryDirectory() as tmpdir:
-        # Create files with similar names
         Path(os.path.join(tmpdir, "test_file_v001.txt")).touch()
         Path(os.path.join(tmpdir, "test_file2_v005.txt")).touch()
         Path(os.path.join(tmpdir, "prefix_test_file_v010.txt")).touch()
-
+        # Act
         result = increment_version(tmpdir, "test_file", ".txt")
-
-        # Should only increment based on exact match
-        expected = os.path.join(tmpdir, "test_file_v002.txt")
-        assert result == expected
+        # Assert
+        assert str(result) == os.path.join(tmpdir, "test_file_v002.txt")
 
 
-def test_increment_version_zero_padded_versions():
-    """Test increment_version maintains zero padding."""
-    from scitex_path import increment_version
+# ---------------------------------------------------------------------------
+# Zero-padded versions
+# ---------------------------------------------------------------------------
 
+
+def test_increment_version_uses_three_digit_padding_when_input_padding_smaller():
+    # Arrange
     with tempfile.TemporaryDirectory() as tmpdir:
-        # Create files with different padding
-        Path(os.path.join(tmpdir, "test_file_v01.txt")).touch()  # 2 digits
-        Path(os.path.join(tmpdir, "test_file_v002.txt")).touch()  # 3 digits
-
+        Path(os.path.join(tmpdir, "test_file_v01.txt")).touch()
+        Path(os.path.join(tmpdir, "test_file_v002.txt")).touch()
+        # Act
         result = increment_version(tmpdir, "test_file", ".txt")
-
-        # Should use 3-digit padding as minimum
-        expected = os.path.join(tmpdir, "test_file_v003.txt")
-        assert result == expected
+        # Assert
+        assert str(result) == os.path.join(tmpdir, "test_file_v003.txt")
 
 
-def test_increment_version_with_dots_in_filename():
-    """Test increment_version with dots in the filename."""
-    from scitex_path import increment_version
+# ---------------------------------------------------------------------------
+# Dots in basename (separate from compound extension)
+# ---------------------------------------------------------------------------
 
+
+def test_increment_version_dots_in_basename_yields_correct_next_path():
+    # Arrange
     with tempfile.TemporaryDirectory() as tmpdir:
-        # Filename with dots
         fname = "test.file.name"
         Path(os.path.join(tmpdir, f"{fname}_v001.txt")).touch()
-
+        # Act
         result = increment_version(tmpdir, fname, ".txt")
-
-        expected = os.path.join(tmpdir, f"{fname}_v002.txt")
-        assert result == expected
+        # Assert
+        assert str(result) == os.path.join(tmpdir, f"{fname}_v002.txt")
 
 
 if __name__ == "__main__":
-    import os
-
-    import pytest
-
     pytest.main([os.path.abspath(__file__)])
 
-# --------------------------------------------------------------------------------
-# Start of Source Code from: /home/ywatanabe/proj/scitex-code/src/scitex/path/_increment_version.py
-# --------------------------------------------------------------------------------
-# #!/usr/bin/env python3
-# # Timestamp: "2026-01-08 02:00:00 (ywatanabe)"
-# # File: /home/ywatanabe/proj/scitex-code/src/scitex/path/_increment_version.py
-#
-# """File versioning utilities."""
-#
-# import re
-# from pathlib import Path
-# from typing import Union
-#
-#
-# def increment_version(
-#     dirname: Union[str, Path],
-#     fname: str,
-#     ext: str,
-#     version_prefix: str = "_v",
-# ) -> Path:
-#     """Generate the next version of a filename based on existing versioned files.
-#
-#     This function searches for files in the given directory that match the pattern:
-#     {fname}{version_prefix}{number}{ext} and returns the path for the next version.
-#
-#     Parameters
-#     ----------
-#     dirname : str or Path
-#         The directory to search in and where the new file will be created.
-#     fname : str
-#         The base filename without version number or extension.
-#     ext : str
-#         The file extension, including the dot (e.g., '.txt').
-#     version_prefix : str, optional
-#         The prefix used before the version number. Default is '_v'.
-#
-#     Returns
-#     -------
-#     Path
-#         The full path for the next version of the file.
-#
-#     Example
-#     -------
-#     >>> increment_version('/path/to/dir', 'myfile', '.txt')
-#     Path('/path/to/dir/myfile_v004.txt')
-#
-#     Notes
-#     -----
-#     - If no existing versioned files are found, it starts with version 001.
-#     - The version number is always formatted with at least 3 digits.
-#     """
-#     dirname = Path(dirname)
-#
-#     version_pattern = re.compile(
-#         rf"({re.escape(fname)}{re.escape(version_prefix)})(\d+)({re.escape(ext)})$"
-#     )
-#
-#     glob_pattern = f"{fname}{version_prefix}*{ext}"
-#     files = list(dirname.glob(glob_pattern))
-#
-#     highest_version = 0
-#     base, suffix = None, None
-#
-#     for file in files:
-#         match = version_pattern.search(file.name)
-#         if match:
-#             base, version_str, suffix = match.groups()
-#             version_num = int(version_str)
-#             if version_num > highest_version:
-#                 highest_version = version_num
-#
-#     if base is None or suffix is None:
-#         base = f"{fname}{version_prefix}"
-#         suffix = ext
-#         highest_version = 0
-#
-#     next_version_number = highest_version + 1
-#     next_version_str = f"{base}{next_version_number:03d}{suffix}"
-#
-#     return dirname / next_version_str
-#
-#
-# # EOF
-
-# --------------------------------------------------------------------------------
-# End of Source Code from: /home/ywatanabe/proj/scitex-code/src/scitex/path/_increment_version.py
-# --------------------------------------------------------------------------------
+# EOF

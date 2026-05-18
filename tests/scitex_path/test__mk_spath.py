@@ -1,240 +1,336 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Timestamp: "2025-06-02 13:00:00 (ywatanabe)"
-# File: ./tests/scitex/path/test__mk_spath.py
+# File: ./tests/scitex_path/test__mk_spath.py
+
+"""Tests for ``scitex_path.mk_spath``.
+
+PA-306: no ``unittest.mock``, no ``monkeypatch``. Collaborators are
+swapped at module namespace level via real save/restore context managers.
+
+STX-TQ001 / 002 / 003 / 007: every test asserts exactly one fact, has
+AAA markers, and a descriptive multi-token name.
+"""
+
+from __future__ import annotations
 
 import os
-import shutil
 import tempfile
-from unittest.mock import MagicMock, patch
+from contextlib import contextmanager
+from types import SimpleNamespace
+from typing import Any, Callable, Iterator, Tuple
 
 import pytest
 
+import scitex_path._mk_spath as _mk_spath_mod
+from scitex_path import mk_spath
 
-def test_mk_spath_default():
-    """Test mk_spath with default arguments."""
-    from scitex_path import mk_spath
-
-    with patch("scitex_path._mk_spath.split") as mock_split:
-        with patch("inspect.stack") as mock_stack:
-            # Mock the stack to simulate calling from a script
-            mock_stack.return_value = [None, MagicMock(filename="/test/path/script.py")]
-            mock_split.return_value = ("/test/path/", "module", ".py")
-
-            # Patch __file__ in the module
-            with patch("scitex_path._mk_spath.__file__", "/test/path/module.py"):
-                result = mk_spath("output.txt")
-
-                assert isinstance(result, str)
-                assert result.endswith("module/output.txt")
-                mock_split.assert_called()
+# ---------------------------------------------------------------------------
+# Collaborator swaps (test seams — no mocks, no monkeypatch)
+# ---------------------------------------------------------------------------
 
 
-def test_mk_spath_with_subdirectory():
-    """Test mk_spath with subdirectory in filename."""
-    from scitex_path import mk_spath
-
-    with patch("scitex_path._mk_spath.split") as mock_split:
-        with patch("inspect.stack") as mock_stack:
-            mock_stack.return_value = [None, MagicMock(filename="/test/script.py")]
-            mock_split.return_value = ("/test/", "module", ".py")
-
-            with patch("scitex_path._mk_spath.__file__", "/test/module.py"):
-                result = mk_spath("subdir/output.txt")
-
-                assert result.endswith("module/subdir/output.txt")
+@contextmanager
+def _swap_split(fn: Callable[[str], Tuple[str, str, str]]) -> Iterator[None]:
+    """Replace ``_mk_spath.split`` with ``fn``."""
+    saved = _mk_spath_mod.split
+    _mk_spath_mod.split = fn  # type: ignore[assignment]
+    try:
+        yield
+    finally:
+        _mk_spath_mod.split = saved  # type: ignore[assignment]
 
 
-def test_mk_spath_makedirs_false():
-    """Test mk_spath without creating directories."""
-    from scitex_path import mk_spath
-
-    with patch("scitex_path._mk_spath.split") as mock_split:
-        with patch("inspect.stack") as mock_stack:
-            with patch("os.makedirs") as mock_makedirs:
-                mock_stack.return_value = [None, MagicMock(filename="/test/script.py")]
-                mock_split.return_value = ("/test/", "module", ".py")
-
-                with patch("scitex_path._mk_spath.__file__", "/test/module.py"):
-                    result = mk_spath("output.txt", makedirs=False)
-
-                    # makedirs should not be called
-                    mock_makedirs.assert_not_called()
+@contextmanager
+def _swap_inspect_stack(stack: Any) -> Iterator[None]:
+    """Replace ``inspect.stack`` (as imported into the module) with one returning ``stack``."""
+    saved = _mk_spath_mod.inspect.stack
+    _mk_spath_mod.inspect.stack = lambda: stack  # type: ignore[assignment]
+    try:
+        yield
+    finally:
+        _mk_spath_mod.inspect.stack = saved  # type: ignore[assignment]
 
 
-def test_mk_spath_makedirs_true():
-    """Test mk_spath with directory creation."""
-    from scitex_path import mk_spath
+@contextmanager
+def _swap_module_dunder_file(new_file: str) -> Iterator[None]:
+    """Replace ``_mk_spath.__file__`` with ``new_file``."""
+    saved = _mk_spath_mod.__file__
+    _mk_spath_mod.__file__ = new_file
+    try:
+        yield
+    finally:
+        _mk_spath_mod.__file__ = saved
 
+
+@contextmanager
+def _swap_os_makedirs(fn: Callable[..., None]) -> Iterator[list]:
+    """Replace ``_mk_spath.os.makedirs`` with ``fn``; yield call recorder."""
+    saved = _mk_spath_mod.os.makedirs
+    calls: list = []
+
+    def recording(*args: Any, **kwargs: Any) -> None:
+        calls.append((args, kwargs))
+        return fn(*args, **kwargs)
+
+    _mk_spath_mod.os.makedirs = recording  # type: ignore[assignment]
+    try:
+        yield calls
+    finally:
+        _mk_spath_mod.os.makedirs = saved  # type: ignore[assignment]
+
+
+def _frame(filename: str) -> SimpleNamespace:
+    return SimpleNamespace(filename=filename)
+
+
+# ---------------------------------------------------------------------------
+# Default behaviour
+# ---------------------------------------------------------------------------
+
+
+def test_mk_spath_default_returns_string_path():
+    # Arrange
+    fake_stack = [None, _frame("/test/path/script.py")]
+
+    def fake_split(_p: str) -> Tuple[str, str, str]:
+        return ("/test/path/", "module", ".py")
+
+    # Act
+    with (
+        _swap_split(fake_split),
+        _swap_inspect_stack(fake_stack),
+        _swap_module_dunder_file("/test/path/module.py"),
+    ):
+        result = mk_spath("output.txt")
+    # Assert
+    assert isinstance(result, str)
+
+
+def test_mk_spath_default_ends_with_module_dir_plus_filename():
+    # Arrange
+    fake_stack = [None, _frame("/test/path/script.py")]
+
+    def fake_split(_p: str) -> Tuple[str, str, str]:
+        return ("/test/path/", "module", ".py")
+
+    # Act
+    with (
+        _swap_split(fake_split),
+        _swap_inspect_stack(fake_stack),
+        _swap_module_dunder_file("/test/path/module.py"),
+    ):
+        result = mk_spath("output.txt")
+    # Assert
+    assert result.endswith("module/output.txt")
+
+
+# ---------------------------------------------------------------------------
+# Subdirectory in filename
+# ---------------------------------------------------------------------------
+
+
+def test_mk_spath_with_subdirectory_preserves_subpath_after_module_dir():
+    # Arrange
+    fake_stack = [None, _frame("/test/script.py")]
+
+    def fake_split(_p: str) -> Tuple[str, str, str]:
+        return ("/test/", "module", ".py")
+
+    # Act
+    with (
+        _swap_split(fake_split),
+        _swap_inspect_stack(fake_stack),
+        _swap_module_dunder_file("/test/module.py"),
+    ):
+        result = mk_spath("subdir/output.txt")
+    # Assert
+    assert result.endswith("module/subdir/output.txt")
+
+
+# ---------------------------------------------------------------------------
+# makedirs=False suppresses directory creation
+# ---------------------------------------------------------------------------
+
+
+def test_mk_spath_makedirs_false_does_not_invoke_os_makedirs():
+    # Arrange
+    fake_stack = [None, _frame("/test/script.py")]
+
+    def fake_split(_p: str) -> Tuple[str, str, str]:
+        return ("/test/", "module", ".py")
+
+    def noop_makedirs(*_a: Any, **_kw: Any) -> None:
+        return None
+
+    # Act
+    with (
+        _swap_split(fake_split),
+        _swap_inspect_stack(fake_stack),
+        _swap_module_dunder_file("/test/module.py"),
+        _swap_os_makedirs(noop_makedirs) as calls,
+    ):
+        mk_spath("output.txt", makedirs=False)
+    # Assert
+    assert calls == []
+
+
+# ---------------------------------------------------------------------------
+# makedirs=True creates the parent directory tree
+# ---------------------------------------------------------------------------
+
+
+def test_mk_spath_makedirs_true_creates_parent_directory_on_disk():
+    # Arrange
     with tempfile.TemporaryDirectory() as tmpdir:
         test_file = os.path.join(tmpdir, "test_module.py")
+        fake_stack = [None, _frame(test_file)]
 
-        with patch("scitex_path._mk_spath.split") as mock_split:
-            with patch("inspect.stack") as mock_stack:
-                mock_stack.return_value = [None, MagicMock(filename=test_file)]
+        def fake_split(path: str) -> Tuple[str, str, str]:
+            if path == test_file:
+                return (tmpdir + "/", "test_module", ".py")
+            dir_part = os.path.dirname(path)
+            if not dir_part.endswith("/"):
+                dir_part += "/"
+            return (dir_part, os.path.basename(path), "")
 
-                # Define split behavior
-                def split_side_effect(path):
-                    if path == test_file:
-                        return (tmpdir + "/", "test_module", ".py")
-                    else:
-                        # For the spath
-                        dir_part = os.path.dirname(path)
-                        if not dir_part.endswith("/"):
-                            dir_part += "/"
-                        return (dir_part, os.path.basename(path), "")
-
-                mock_split.side_effect = split_side_effect
-
-                with patch("scitex_path._mk_spath.__file__", test_file):
-                    result = mk_spath("subdir/output.txt", makedirs=True)
-
-                    # Check that directory was created
-                    expected_dir = os.path.join(tmpdir, "test_module", "subdir")
-                    assert os.path.exists(expected_dir)
+        expected_dir = os.path.join(tmpdir, "test_module", "subdir")
+        # Act
+        with (
+            _swap_split(fake_split),
+            _swap_inspect_stack(fake_stack),
+            _swap_module_dunder_file(test_file),
+        ):
+            mk_spath("subdir/output.txt", makedirs=True)
+        # Assert
+        assert os.path.exists(expected_dir)
 
 
-def test_mk_spath_ipython_environment():
-    """Test mk_spath in iPython environment."""
-    from scitex_path import mk_spath
-
-    with patch("scitex_path._mk_spath.split") as mock_split:
-        with patch("inspect.stack") as mock_stack:
-            with patch.dict(os.environ, {"USER": "testuser"}):
-                mock_stack.return_value = [None, MagicMock(filename="/test/script.py")]
-                mock_split.return_value = ("/test/", "module", ".py")
-
-                # Simulate ipython environment
-                with patch(
-                    "scitex_path._mk_spath.__file__", "/path/to/ipython/module.py"
-                ):
-                    result = mk_spath("output.txt")
-
-                    assert isinstance(result, str)
-                    # Should handle ipython case
+# ---------------------------------------------------------------------------
+# iPython environment — function still returns a string
+# ---------------------------------------------------------------------------
 
 
-def test_mk_spath_empty_filename():
-    """Test mk_spath with empty filename."""
-    from scitex_path import mk_spath
+def test_mk_spath_in_ipython_environment_returns_string():
+    # Arrange
+    fake_stack = [None, _frame("/test/script.py")]
 
-    with patch("scitex_path._mk_spath.split") as mock_split:
-        with patch("inspect.stack") as mock_stack:
-            mock_stack.return_value = [None, MagicMock(filename="/test/script.py")]
-            mock_split.return_value = ("/test/", "module", ".py")
+    def fake_split(_p: str) -> Tuple[str, str, str]:
+        return ("/test/", "module", ".py")
 
-            with patch("scitex_path._mk_spath.__file__", "/test/module.py"):
-                result = mk_spath("")
-
-                assert result.endswith("module/")
-
-
-def test_mk_spath_multiple_levels():
-    """Test mk_spath with multiple directory levels."""
-    from scitex_path import mk_spath
-
-    with patch("scitex_path._mk_spath.split") as mock_split:
-        with patch("inspect.stack") as mock_stack:
-            mock_stack.return_value = [None, MagicMock(filename="/test/script.py")]
-            mock_split.return_value = ("/test/", "module", ".py")
-
-            with patch("scitex_path._mk_spath.__file__", "/test/module.py"):
-                result = mk_spath("level1/level2/level3/output.txt")
-
-                assert result.endswith("module/level1/level2/level3/output.txt")
+    saved_user = os.environ.get("USER")
+    os.environ["USER"] = "testuser"
+    try:
+        # Act
+        with (
+            _swap_split(fake_split),
+            _swap_inspect_stack(fake_stack),
+            _swap_module_dunder_file("/path/to/ipython/module.py"),
+        ):
+            result = mk_spath("output.txt")
+        # Assert
+        assert isinstance(result, str)
+    finally:
+        if saved_user is None:
+            os.environ.pop("USER", None)
+        else:
+            os.environ["USER"] = saved_user
 
 
-def test_mk_spath_with_extension():
-    """Test mk_spath with various file extensions."""
-    from scitex_path import mk_spath
-
-    with patch("scitex_path._mk_spath.split") as mock_split:
-        with patch("inspect.stack") as mock_stack:
-            mock_stack.return_value = [None, MagicMock(filename="/test/script.py")]
-            mock_split.return_value = ("/test/", "module", ".py")
-
-            with patch("scitex_path._mk_spath.__file__", "/test/module.py"):
-                # Test various extensions
-                for ext in [".txt", ".csv", ".json", ".tar.gz"]:
-                    result = mk_spath(f"output{ext}")
-                    assert result.endswith(f"module/output{ext}")
+# ---------------------------------------------------------------------------
+# Empty filename
+# ---------------------------------------------------------------------------
 
 
-def test_mk_spath_absolute_path():
-    """Test mk_spath behavior with absolute path input."""
-    from scitex_path import mk_spath
+def test_mk_spath_empty_filename_returns_module_dir_with_trailing_slash():
+    # Arrange
+    fake_stack = [None, _frame("/test/script.py")]
 
-    with patch("scitex_path._mk_spath.split") as mock_split:
-        with patch("inspect.stack") as mock_stack:
-            mock_stack.return_value = [None, MagicMock(filename="/test/script.py")]
-            mock_split.return_value = ("/test/", "module", ".py")
+    def fake_split(_p: str) -> Tuple[str, str, str]:
+        return ("/test/", "module", ".py")
 
-            with patch("scitex_path._mk_spath.__file__", "/test/module.py"):
-                # Even with absolute path, it gets appended
-                result = mk_spath("/absolute/path/file.txt")
+    # Act
+    with (
+        _swap_split(fake_split),
+        _swap_inspect_stack(fake_stack),
+        _swap_module_dunder_file("/test/module.py"),
+    ):
+        result = mk_spath("")
+    # Assert
+    assert result.endswith("module/")
 
-                assert result.endswith("module//absolute/path/file.txt")
+
+# ---------------------------------------------------------------------------
+# Deep subdirectory path
+# ---------------------------------------------------------------------------
+
+
+def test_mk_spath_with_multiple_directory_levels_preserves_full_subpath():
+    # Arrange
+    fake_stack = [None, _frame("/test/script.py")]
+
+    def fake_split(_p: str) -> Tuple[str, str, str]:
+        return ("/test/", "module", ".py")
+
+    # Act
+    with (
+        _swap_split(fake_split),
+        _swap_inspect_stack(fake_stack),
+        _swap_module_dunder_file("/test/module.py"),
+    ):
+        result = mk_spath("level1/level2/level3/output.txt")
+    # Assert
+    assert result.endswith("module/level1/level2/level3/output.txt")
+
+
+# ---------------------------------------------------------------------------
+# Extensions — one test per extension so each asserts one fact
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("ext", [".txt", ".csv", ".json", ".tar.gz"])
+def test_mk_spath_preserves_extension_in_returned_path(ext: str):
+    # Arrange
+    fake_stack = [None, _frame("/test/script.py")]
+
+    def fake_split(_p: str) -> Tuple[str, str, str]:
+        return ("/test/", "module", ".py")
+
+    # Act
+    with (
+        _swap_split(fake_split),
+        _swap_inspect_stack(fake_stack),
+        _swap_module_dunder_file("/test/module.py"),
+    ):
+        result = mk_spath(f"output{ext}")
+    # Assert
+    assert result.endswith(f"module/output{ext}")
+
+
+# ---------------------------------------------------------------------------
+# Absolute input path is appended verbatim (legacy quirk)
+# ---------------------------------------------------------------------------
+
+
+def test_mk_spath_absolute_input_filename_is_concatenated_after_module_dir():
+    # Arrange
+    fake_stack = [None, _frame("/test/script.py")]
+
+    def fake_split(_p: str) -> Tuple[str, str, str]:
+        return ("/test/", "module", ".py")
+
+    # Act
+    with (
+        _swap_split(fake_split),
+        _swap_inspect_stack(fake_stack),
+        _swap_module_dunder_file("/test/module.py"),
+    ):
+        result = mk_spath("/absolute/path/file.txt")
+    # Assert
+    assert result.endswith("module//absolute/path/file.txt")
 
 
 if __name__ == "__main__":
-    import os
-
-    import pytest
-
     pytest.main([os.path.abspath(__file__)])
 
-# --------------------------------------------------------------------------------
-# Start of Source Code from: /home/ywatanabe/proj/scitex-code/src/scitex/path/_mk_spath.py
-# --------------------------------------------------------------------------------
-# #!/usr/bin/env python3
-# # Timestamp: "2026-01-08 02:00:00 (ywatanabe)"
-# # File: /home/ywatanabe/proj/scitex-code/src/scitex/path/_mk_spath.py
-#
-# """Save path creation utilities."""
-#
-# import inspect
-# import os
-# from pathlib import Path
-# from typing import Union
-#
-#
-# def mk_spath(sfname: Union[str, Path], makedirs: bool = False) -> Path:
-#     """Create a save path based on the calling script's location.
-#
-#     Parameters
-#     ----------
-#     sfname : str or Path
-#         The name of the file to be saved.
-#     makedirs : bool, optional
-#         If True, create the directory structure for the save path.
-#
-#     Returns
-#     -------
-#     Path
-#         The full save path for the file.
-#
-#     Example
-#     -------
-#     >>> spath = mk_spath('output.txt', makedirs=True)
-#     >>> print(spath)
-#     Path('/path/to/current/script_out/output.txt')
-#     """
-#     caller_file = inspect.stack()[1].filename
-#     if "ipython" in caller_file.lower():
-#         caller_file = f"/tmp/fake-{os.getenv('USER')}.py"
-#
-#     fpath = Path(caller_file)
-#     sdir = fpath.parent / f"{fpath.stem}_out"
-#     spath = sdir / sfname
-#
-#     if makedirs:
-#         spath.parent.mkdir(parents=True, exist_ok=True)
-#
-#     return spath
-#
-#
-# # EOF
-
-# --------------------------------------------------------------------------------
-# End of Source Code from: /home/ywatanabe/proj/scitex-code/src/scitex/path/_mk_spath.py
-# --------------------------------------------------------------------------------
+# EOF

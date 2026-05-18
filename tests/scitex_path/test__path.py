@@ -1,188 +1,249 @@
 #!/usr/bin/env python3
 # Time-stamp: "2024-11-08 05:54:25 (ywatanabe)"
-# File: ./scitex_repo/tests/scitex/path/test__path.py
+# File: ./tests/scitex_path/test__path.py
 
-"""
-Tests for path utility functions.
+"""Tests for ``scitex_path._path`` (legacy alias module).
+
+These mirror ``test__this_path.py`` but exercise the public-name aliases
+exported from ``_path``.
+
+PA-306: no ``unittest.mock``, no ``monkeypatch``. Collaborators are
+swapped at the module namespace via real save/restore context managers.
+
+STX-TQ001 / 002 / 003 / 007: every test asserts exactly one fact, has
+AAA markers, and a descriptive multi-token name.
 """
 
-import inspect
-from unittest.mock import MagicMock, Mock, patch
+from __future__ import annotations
+
+from contextlib import contextmanager
+from types import SimpleNamespace
+from typing import Any, Iterator, List
 
 import pytest
 
+import scitex_path._this_path as _this_path_mod
 from scitex_path import get_this_path, this_path
 
+# ---------------------------------------------------------------------------
+# Collaborator swaps (test seams — no mocks, no monkeypatch)
+# ---------------------------------------------------------------------------
 
-class TestThisPath:
-    """Test this_path function."""
 
-    def test_this_path_normal_file(self):
-        """Test this_path with normal Python file."""
-        # Mock the inspect.stack to return a specific filename
-        mock_frame = Mock()
-        mock_frame.filename = "/home/user/project/my_script.py"
+@contextmanager
+def _swap_inspect_stack(stack: List[Any]) -> Iterator[None]:
+    """Replace ``_this_path.inspect.stack`` with a function returning ``stack``."""
+    saved = _this_path_mod.inspect.stack
+    _this_path_mod.inspect.stack = lambda: stack  # type: ignore[assignment]
+    try:
+        yield
+    finally:
+        _this_path_mod.inspect.stack = saved  # type: ignore[assignment]
 
-        with patch("inspect.stack", return_value=[None, mock_frame]):
-            with patch(
-                "scitex_path._this_path.__file__",
-                "/home/user/project/scitex/path/_this_path.py",
-            ):
-                result = this_path()
-                # Note: The function has a bug - it returns __file__ instead of THIS_FILE
-                assert result == "/home/user/project/scitex/path/_this_path.py"
 
-    def test_this_path_ipython_environment(self):
-        """Test this_path when running in IPython."""
-        mock_frame = Mock()
-        mock_frame.filename = "<ipython console>"
+@contextmanager
+def _swap_module_dunder_file(new_file: str) -> Iterator[None]:
+    """Replace ``_this_path.__file__`` with ``new_file``."""
+    saved = _this_path_mod.__file__
+    _this_path_mod.__file__ = new_file
+    try:
+        yield
+    finally:
+        _this_path_mod.__file__ = saved
 
-        with patch("inspect.stack", return_value=[None, mock_frame]):
-            with patch(
-                "scitex_path._this_path.__file__", "/some/path/with/ipython/in/it.py"
-            ):
-                result = this_path()
-                # When 'ipython' is in __file__, it returns __file__ (due to bug)
-                assert result == "/some/path/with/ipython/in/it.py"
 
-    def test_this_path_custom_ipython_path(self):
-        """Test this_path with custom IPython fallback path."""
-        mock_frame = Mock()
-        mock_frame.filename = "<ipython console>"
+def _frame(filename: str) -> SimpleNamespace:
+    return SimpleNamespace(filename=filename)
 
-        with patch("inspect.stack", return_value=[None, mock_frame]):
-            with patch(
-                "scitex_path._this_path.__file__", "/path/with/ipython/kernel.py"
-            ):
-                result = this_path(ipython_fake_path="/my/custom/path.py")
-                # Still returns __file__ due to the bug
-                assert result == "/path/with/ipython/kernel.py"
 
-    def test_this_path_stack_structure(self):
-        """Test that this_path accesses the correct stack frame."""
-        mock_frame0 = Mock()
-        mock_frame0.filename = "/path/to/this_function.py"
-        mock_frame1 = Mock()
-        mock_frame1.filename = "/path/to/calling_function.py"
-        mock_frame2 = Mock()
-        mock_frame2.filename = "/path/to/caller_of_caller.py"
+# ---------------------------------------------------------------------------
+# this_path() returns module ``__file__`` regardless of caller
+# ---------------------------------------------------------------------------
 
-        with patch(
-            "inspect.stack", return_value=[mock_frame0, mock_frame1, mock_frame2]
-        ):
-            with patch("scitex_path._this_path.__file__", "/scitex/path/_this_path.py"):
-                # The function should use stack()[1].filename
-                result = this_path()
-                assert result == "/scitex/path/_this_path.py"
 
-    def test_this_path_various_file_patterns(self):
-        """Test with various file path patterns."""
-        test_cases = [
-            "/absolute/path/to/file.py",
-            "relative/path/file.py",
-            "../parent/file.py",
-            "C:\\Windows\\path\\file.py",
-            "/path with spaces/file.py",
-            "/path/with-special_chars@123/file.py",
-        ]
+def test_this_path_returns_dunder_file_for_normal_python_caller():
+    # Arrange
+    stack = [None, _frame("/home/user/project/my_script.py")]
+    # Act
+    with (
+        _swap_inspect_stack(stack),
+        _swap_module_dunder_file("/home/user/project/scitex/path/_this_path.py"),
+    ):
+        result = this_path()
+    # Assert
+    assert result == "/home/user/project/scitex/path/_this_path.py"
 
-        for test_path in test_cases:
-            mock_frame = Mock()
-            mock_frame.filename = test_path
 
-            with patch("inspect.stack", return_value=[None, mock_frame]):
-                with patch("scitex_path._this_path.__file__", test_path):
-                    result = this_path()
-                    # Due to bug, always returns __file__
-                    assert result == test_path
+def test_this_path_returns_dunder_file_for_ipython_caller_filename():
+    # Arrange
+    stack = [None, _frame("<ipython console>")]
+    # Act
+    with (
+        _swap_inspect_stack(stack),
+        _swap_module_dunder_file("/some/path/with/ipython/in/it.py"),
+    ):
+        result = this_path()
+    # Assert
+    assert result == "/some/path/with/ipython/in/it.py"
 
-    def test_this_path_no_ipython_in_path(self):
-        """Test when 'ipython' is not in the file path."""
-        mock_frame = Mock()
-        mock_frame.filename = "/normal/python/script.py"
 
-        with patch("inspect.stack", return_value=[None, mock_frame]):
-            with patch("scitex_path._this_path.__file__", "/normal/module/path.py"):
-                result = this_path()
-                assert result == "/normal/module/path.py"
-                assert "ipython" not in result
+def test_this_path_ignores_custom_ipython_fake_path_kwarg():
+    # Arrange
+    stack = [None, _frame("<ipython console>")]
+    # Act
+    with (
+        _swap_inspect_stack(stack),
+        _swap_module_dunder_file("/path/with/ipython/kernel.py"),
+    ):
+        result = this_path(ipython_fake_path="/my/custom/path.py")
+    # Assert
+    assert result == "/path/with/ipython/kernel.py"
 
-    def test_this_path_edge_cases(self):
-        """Test edge cases for this_path."""
-        # Empty filename
-        mock_frame = Mock()
-        mock_frame.filename = ""
 
-        with patch("inspect.stack", return_value=[None, mock_frame]):
-            with patch("scitex_path._this_path.__file__", "/scitex/path/_this_path.py"):
-                result = this_path()
-                assert result == "/scitex/path/_this_path.py"
+def test_this_path_returns_dunder_file_regardless_of_frame_depth():
+    # Arrange
+    stack = [
+        _frame("/path/to/this_function.py"),
+        _frame("/path/to/calling_function.py"),
+        _frame("/path/to/caller_of_caller.py"),
+    ]
+    # Act
+    with (
+        _swap_inspect_stack(stack),
+        _swap_module_dunder_file("/scitex/path/_this_path.py"),
+    ):
+        result = this_path()
+    # Assert
+    assert result == "/scitex/path/_this_path.py"
 
-        # None filename (shouldn't happen but test defensive programming)
-        mock_frame.filename = None
-        with patch("inspect.stack", return_value=[None, mock_frame]):
-            with patch("scitex_path._this_path.__file__", "/scitex/path/_this_path.py"):
-                result = this_path()
-                assert result == "/scitex/path/_this_path.py"
 
-    def test_get_this_path_alias(self):
-        """Test that get_this_path is an alias for this_path."""
-        assert get_this_path == this_path
-        assert get_this_path is this_path
+# ---------------------------------------------------------------------------
+# Various paths — parametrised, one fact per case
+# ---------------------------------------------------------------------------
 
-    def test_this_path_implementation_bug(self):
-        """Test documenting the implementation bug."""
-        # The function sets THIS_FILE from inspect.stack()[1].filename
-        # but then returns __file__ instead of THIS_FILE
-        # This test documents this behavior
 
-        mock_frame = Mock()
-        mock_frame.filename = "/caller/file.py"
+@pytest.mark.parametrize(
+    "test_path",
+    [
+        "/absolute/path/to/file.py",
+        "relative/path/file.py",
+        "../parent/file.py",
+        "C:\\Windows\\path\\file.py",
+        "/path with spaces/file.py",
+        "/path/with-special_chars@123/file.py",
+    ],
+)
+def test_this_path_returns_dunder_file_for_each_input_pattern(test_path: str):
+    # Arrange
+    stack = [None, _frame(test_path)]
+    # Act
+    with _swap_inspect_stack(stack), _swap_module_dunder_file(test_path):
+        result = this_path()
+    # Assert
+    assert result == test_path
 
-        with patch("inspect.stack", return_value=[None, mock_frame]):
-            with patch("scitex_path._this_path.__file__", "/module/file.py"):
-                result = this_path()
-                # Should return "/caller/file.py" (THIS_FILE) but returns __file__
-                assert result == "/module/file.py"
-                assert result != mock_frame.filename
 
-    def test_this_path_with_ipython_fake_path_not_used(self):
-        """Test that ipython_fake_path parameter is not used due to bug."""
-        mock_frame = Mock()
-        mock_frame.filename = "<ipython-input-1>"
+# ---------------------------------------------------------------------------
+# ipython literal not present in module path
+# ---------------------------------------------------------------------------
 
-        with patch("inspect.stack", return_value=[None, mock_frame]):
-            with patch("scitex_path._this_path.__file__", "/has/ipython/in/path.py"):
-                # Even though THIS_FILE would be set to ipython_fake_path value,
-                # the function returns __file__ so ipython_fake_path is ignored
-                result = this_path(ipython_fake_path="/custom/fallback.py")
-                assert result == "/has/ipython/in/path.py"
-                assert result != "/custom/fallback.py"
+
+def test_this_path_returns_dunder_file_when_ipython_token_absent():
+    # Arrange
+    stack = [None, _frame("/normal/python/script.py")]
+    # Act
+    with _swap_inspect_stack(stack), _swap_module_dunder_file("/normal/module/path.py"):
+        result = this_path()
+    # Assert
+    assert result == "/normal/module/path.py"
+
+
+def test_this_path_returned_value_does_not_contain_ipython_when_path_lacks_it():
+    # Arrange
+    stack = [None, _frame("/normal/python/script.py")]
+    # Act
+    with _swap_inspect_stack(stack), _swap_module_dunder_file("/normal/module/path.py"):
+        result = this_path()
+    # Assert
+    assert "ipython" not in result
+
+
+# ---------------------------------------------------------------------------
+# Edge cases — empty / None frame filename
+# ---------------------------------------------------------------------------
+
+
+def test_this_path_returns_dunder_file_when_frame_filename_is_empty():
+    # Arrange
+    stack = [None, _frame("")]
+    # Act
+    with (
+        _swap_inspect_stack(stack),
+        _swap_module_dunder_file("/scitex/path/_this_path.py"),
+    ):
+        result = this_path()
+    # Assert
+    assert result == "/scitex/path/_this_path.py"
+
+
+def test_this_path_returns_dunder_file_when_frame_filename_is_none():
+    # Arrange
+    stack = [None, _frame(None)]
+    # Act
+    with (
+        _swap_inspect_stack(stack),
+        _swap_module_dunder_file("/scitex/path/_this_path.py"),
+    ):
+        result = this_path()
+    # Assert
+    assert result == "/scitex/path/_this_path.py"
+
+
+# ---------------------------------------------------------------------------
+# Alias
+# ---------------------------------------------------------------------------
+
+
+def test_get_this_path_is_same_object_as_this_path():
+    # Arrange
+    # (no setup needed)
+    # Act
+    same = get_this_path is this_path
+    # Assert
+    assert same is True
+
+
+# ---------------------------------------------------------------------------
+# Documents the legacy bug: caller filename is NOT returned
+# ---------------------------------------------------------------------------
+
+
+def test_this_path_returns_module_file_not_caller_filename_legacy_quirk():
+    # Arrange
+    stack = [None, _frame("/caller/file.py")]
+    # Act
+    with _swap_inspect_stack(stack), _swap_module_dunder_file("/module/file.py"):
+        result = this_path()
+    # Assert
+    assert result == "/module/file.py"
+
+
+def test_this_path_legacy_ignores_ipython_fake_path_when_module_path_has_ipython():
+    # Arrange
+    stack = [None, _frame("<ipython-input-1>")]
+    # Act
+    with (
+        _swap_inspect_stack(stack),
+        _swap_module_dunder_file("/has/ipython/in/path.py"),
+    ):
+        result = this_path(ipython_fake_path="/custom/fallback.py")
+    # Assert
+    assert result == "/has/ipython/in/path.py"
 
 
 if __name__ == "__main__":
     import os
 
-    import pytest
-
     pytest.main([os.path.abspath(__file__)])
 
-# --------------------------------------------------------------------------------
-# Start of Source Code from: /home/ywatanabe/proj/scitex-code/src/scitex/path/_path.py
-# --------------------------------------------------------------------------------
-# #!/usr/bin/env python3
-# # Timestamp: "2026-01-08 02:00:00 (ywatanabe)"
-# # File: /home/ywatanabe/proj/scitex-code/src/scitex/path/_path.py
-#
-# """Path utilities - deprecated, use _this_path.py instead."""
-#
-# from ._this_path import get_this_path, this_path
-#
-# __all__ = ["this_path", "get_this_path"]
-#
-#
-# # EOF
-
-# --------------------------------------------------------------------------------
-# End of Source Code from: /home/ywatanabe/proj/scitex-code/src/scitex/path/_path.py
-# --------------------------------------------------------------------------------
+# EOF
