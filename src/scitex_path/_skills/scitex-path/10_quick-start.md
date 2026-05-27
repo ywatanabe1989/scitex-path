@@ -56,6 +56,6 @@ root = find_git_root()     # nearest ancestor containing .git
 ```python
 from scitex_path import increment_version
 
-# Given existing ./out_v001, returns ./out_v002 (does not create it)
-next_dir = increment_version("./out")
+# Given existing ./out_v001.txt, returns ./out_v002.txt (does not create it)
+next_path = increment_version(".", "out", ".txt")
 ```

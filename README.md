@@ -46,7 +46,7 @@ pip install scitex-path
 import scitex_path as sp
 
 git_root = sp.find_git_root()
-matches = sp.find_file("*.csv", root="/data/project")
+matches = sp.find_file("/data/project", "*.csv")
 ```
 
 ## 1 Interfaces
@@ -60,10 +60,9 @@ matches = sp.find_file("*.csv", root="/data/project")
 import scitex_path as sp
 
 # Find
-sp.find_file("*.csv", root="/data/project")
-sp.find_dir("results_*", root="/runs")
+sp.find_file("/data/project", "*.csv")
+sp.find_dir("/runs", "results_*")
 sp.find_git_root()
-sp.find_latest("/results/experiment_v*")
 
 # Path manipulation
 sp.split("/home/user/project/data/results.csv")
@@ -78,7 +77,8 @@ sp.fix_broken_symlinks("/project/data")
 sp.resolve_symlinks(path)
 
 # Versioning
-sp.increment_version("v1.2.3", part="patch")  # "v1.2.4"
+sp.increment_version("/runs", "experiment", ".txt")  # → /runs/experiment_v001.txt
+sp.find_latest("/runs", "experiment", ".txt")        # → /runs/experiment_v003.txt
 
 # Session paths (relative to calling script)
 sp.this_path() / sp.get_this_path()
@@ -91,13 +91,18 @@ sp.get_spath(filename) / sp.mk_spath(filename)
 
 ```
 scitex_path/
-├── _find.py              ← find_file, find_dir, find_git_root, find_latest
-├── _split_clean.py       ← split, clean, getsize
-├── _symlink.py           ← symlink, create_relative_symlink,
-│                            list_symlinks, fix_broken_symlinks, resolve_symlinks
-├── _version.py           ← increment_version (semver bumps)
-└── _session.py           ← this_path / get_spath / mk_spath
-                            (caller-script-relative `_out/` dirs)
+├── _clean.py              ← clean
+├── _find.py               ← find_file, find_dir, find_git_root
+├── _get_module_path.py    ← get_data_path_from_a_package
+├── _getsize.py            ← getsize
+├── _mk_spath.py           ← mk_spath
+├── _split.py              ← split
+├── _symlink.py            ← symlink, create_relative_symlink,
+│                            list_symlinks, fix_broken_symlinks,
+│                            resolve_symlinks, is_symlink, readlink,
+│                            unlink_symlink
+├── _this_path.py          ← this_path, get_this_path
+└── _version.py            ← find_latest, increment_version
 ```
 
 ## Demo
@@ -108,22 +113,22 @@ flowchart LR
     A -->|mk_spath| C[script_out/]
     C --> D[results.csv]
     D -->|create_relative_symlink| E[repo/latest.csv]
-    F[/runs/experiment_v*/] -->|find_latest| G[experiment_v17]
+    F[/runs/experiment_v*/] -->|find_latest| G[experiment_v17.txt]
 ```
 
 ```python
 import scitex_path as sp
 
-root = sp.find_git_root()                          # → /home/me/proj/myrepo
-out  = sp.mk_spath("results.csv")                  # → <script>_out/results.csv
+root = sp.find_git_root()                                # → /home/me/proj/myrepo
+out  = sp.mk_spath("results.csv")                        # → <script>_out/results.csv
 sp.create_relative_symlink(out, root / "latest.csv")
-print(sp.find_latest("/runs/experiment_v*"))       # → /runs/experiment_v17
+print(sp.find_latest("/runs", "experiment", ".txt"))     # → /runs/experiment_v17.txt
 ```
 
 ```
 /home/me/proj/myrepo
 /home/me/proj/myrepo/scripts/train_out/results.csv
-/runs/experiment_v17
+/runs/experiment_v17.txt
 ```
 
 ## Part of SciTeX
