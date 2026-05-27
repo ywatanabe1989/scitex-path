@@ -10,11 +10,10 @@ tags: [scitex-path-quick-start]
 ## Find a file walking up
 
 ```python
-from scitex_path import find_file, find_dir, find_git_root
+from scitex_path import find_file, find_git_root
 
-cfg = find_file("config.yaml")        # walks up from cwd
-data_dir = find_dir("data")
-repo_root = find_git_root()           # nearest .git/
+cfg = find_file(".", "config.yaml")        # search cwd for config.yaml
+repo_root = find_git_root()                # nearest .git/
 ```
 
 ## SciTeX session paths
@@ -32,8 +31,8 @@ out = mk_spath("results.csv")         # ./script_out/<session>/results.csv
 ```python
 from scitex_path import increment_version, find_latest
 
-next_dir = increment_version("runs/v00")     # runs/v001, v002, ...
-latest   = find_latest("runs/v00")           # highest existing version
+next_dir = increment_version("runs", "experiment", ".txt")  # runs/experiment_v001.txt
+latest   = find_latest("runs", "experiment", ".txt")        # highest existing version
 ```
 
 ## Symlink hygiene
