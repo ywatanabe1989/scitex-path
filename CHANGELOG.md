@@ -18,6 +18,11 @@ versions follow [Semantic Versioning](https://semver.org/).
   every use case the legacy wrapper supported, and Phase A inventory
   found no consumer of the gen variant, so it is being dropped (not
   ported) in the scitex_gen retirement PR.
+- feat: port `copy_files`, `_copy_a_file`, `copy_the_file` from
+  scitex-gen `misc.py`. `copy_the_file` is bug-fixed (it previously
+  referenced an undefined `inspect` import and an undefined `dst`
+  variable). The trailing-slash dest-as-directory behavior is
+  preserved.
 
 ## [0.1.4]
 

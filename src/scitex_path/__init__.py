@@ -14,6 +14,7 @@ except ImportError:  # pragma: no cover — only on ancient Pythons
     __version__ = "0.0.0+local"
 
 from ._clean import clean
+from ._copy_files import _copy_a_file, copy_files, copy_the_file
 from ._find import find_dir, find_file, find_git_root
 from ._get_module_path import get_data_path_from_a_package
 from ._get_spath import get_spath
@@ -38,7 +39,10 @@ from ._version import find_latest, increment_version
 
 __all__ = [
     "__version__",
+    "_copy_a_file",
     "clean",
+    "copy_files",
+    "copy_the_file",
     "create_relative_symlink",
     "find_dir",
     "find_file",
