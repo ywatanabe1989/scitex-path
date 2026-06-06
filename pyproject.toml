@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "scitex-path"
-version = "0.1.7"
+version = "0.2.0"
 description = "Scientific project path utilities (find, split, symlink, versioning)"
 readme = "README.md"
 license = "AGPL-3.0-only"
@@ -32,6 +32,11 @@ dev = [
     "pytest",
     "pytest-cov",
     "scitex-dev>=0.11.7",
+    "scitex-dict",
+]
+dict = [
+    # title2path's dict-input branch lazily imports scitex_dict.to_str.
+    "scitex-dict",
 ]
 docs = [
     "sphinx>=7.0",

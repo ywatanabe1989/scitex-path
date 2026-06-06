@@ -33,6 +33,7 @@ from ._symlink import (
     unlink_symlink,
 )
 from ._this_path import get_this_path, this_path
+from ._title2path import title2path
 from ._version import find_latest, increment_version
 
 __all__ = [
@@ -57,5 +58,6 @@ __all__ = [
     "split",
     "symlink",
     "this_path",
+    "title2path",
     "unlink_symlink",
 ]
