@@ -25,7 +25,15 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
-dependencies = ["numpy"]
+dependencies = [
+    # `numpy` dropped from core in 2026-06-13 hard-dep-overreach
+    # sweep. `rg "^(import|from)\s+numpy\b" src/` finds ZERO imports
+    # across the source. scitex-path provides PATH-resolution helpers
+    # (resolve, glob, etc.) — there is no numerical content that needs
+    # numpy. The pin was likely a fork-time copy from an ancestor.
+    # CI-as-gate (a2a 582a39fb) catches any lazy / re-export usage
+    # before auto-merge. See scitex-dev a2a directive da6bcfb8.
+]
 
 [project.optional-dependencies]
 dev = [
