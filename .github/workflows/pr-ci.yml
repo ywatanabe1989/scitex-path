@@ -70,36 +70,43 @@ jobs:
 
   tests:
     name: pytest-matrix-on-ubuntu-py${{ matrix.python-version }}
-    runs-on: ubuntu-latest
+    # Self-hosted Spartan CPU runner (label: spartan-cpu). The runner
+    # srun --overlaps an ALREADY-RUNNING SLURM lease, and CI runs INSIDE a
+    # reused, pre-built SIF (~/.scitex/dev/containers/ci-cpu.sif on punim0264)
+    # that bakes python3.11/3.12/3.13 + the curated ecosystem dep union
+    # (scientific core + scitex basics + scitex-dev[all,dev] + pytest). Each
+    # run only overlays the checkout via PYTHONPATH — NO per-run install. The
+    # SIF IS the cache; rebuild via `scitex-container apptainer build ci-cpu`.
+    # fail-loud: a missing SIF / missing dep is a hard error, never a reinstall.
+    runs-on: [self-hosted, Linux, X64, spartan-cpu]
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
         python-version: ${{ github.event_name == 'pull_request' && fromJson('["3.11", "3.12", "3.13"]') || fromJson('["3.12"]') }}
     steps:
       - uses: actions/checkout@v4
-      - name: Install uv
-        uses: astral-sh/setup-uv@v3
-        with:
-          enable-cache: true
-          cache-dependency-glob: pyproject.toml
-      - name: Set up Python ${{ matrix.python-version }} (uv-managed)
-        run: uv python install ${{ matrix.python-version }}
-      - name: Create uv venv on this matrix Python
-        run: uv venv --python ${{ matrix.python-version }} .venv
-      - name: Install dependencies
-        # Fallback chain: prefer [all,dev] so optional-dep code paths
-        # get exercised. Falls back to [dev] then plain editable so a
-        # packaging hiccup doesn't strand CI.
+      - name: Run tests in the reused CI SIF (apptainer exec — no per-run install)
         run: |
-          uv pip install --python .venv/bin/python -e ".[all,dev]" \
-            || uv pip install --python .venv/bin/python -e ".[dev]" \
-            || uv pip install --python .venv/bin/python -e .
-      - name: Run tests
-        # PATH prepend so any test that subprocess-calls a console script
-        # finds it in .venv/bin/.
-        run: |
-          export PATH="$PWD/.venv/bin:$PATH"
-          .venv/bin/pytest tests/ --cov=src/scitex_path --cov-report=xml --cov-report=term
+          set -euo pipefail
+          # The runner's job shell is --noprofile --norc (no Lmod), so put the
+          # self-contained apptainer shim on PATH (it execs the real Apptainer
+          # binary directly — no `module`, no login shell).
+          export PATH="$HOME/.env-3.11/bin:$PATH"
+          command -v apptainer >/dev/null || { echo "::error::apptainer shim not on PATH (~/.env-3.11/bin)"; exit 1; }
+          IMG="$HOME/.scitex/dev/containers/ci-cpu.sif"
+          if [ ! -f "$IMG" ]; then
+            echo "::error::CI SIF missing at $IMG — rebuild it: scitex-container apptainer build ci-cpu"
+            exit 1
+          fi
+          V="${{ matrix.python-version }}"
+          export APPTAINER_TMPDIR=/data/gpfs/projects/punim0264/ywatanabe/ci/apptainer-tmp
+          mkdir -p "$APPTAINER_TMPDIR"
+          # Read-only SIF, NO install: the in-container setup (PYTHONPATH=src +
+          # the baked venv bin on PATH) lives in .github/ci/run-in-sif.sh.
+          # --bind punim0264 so the $HOME/.scitex symlink resolves inside.
+          apptainer exec --pwd "$PWD" --bind /data/gpfs/projects/punim0264 \
+            "$IMG" bash .github/ci/run-in-sif.sh "$V"
       - name: Upload coverage to Codecov
         if: always() && matrix.python-version == '3.12'
         uses: codecov/codecov-action@v5
